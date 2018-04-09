@@ -9,6 +9,13 @@ compatible with a handful of commands but use a different storage backend.
 
 I don't intend of making this a "real" project, this is just a teaching exercise.
 
+## Goals
+
+* Built a simple service that is protocol compatible with commands redis.
+* Have some kind of persistance and threading to utilize multiple CPUs.
+* Minimize the use of third party libraries and mainly rely on Rust's stdlib.
+* Not be taken too seriously.
+
 ## What works?
 
 * Basic GET/SET commands with 32-bit integers.
