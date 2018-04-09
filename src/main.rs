@@ -30,8 +30,6 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
                     let _ = stream.write(rsp.as_bytes());
                 }
             }
-
-            println!("GET command");
         },
         "SET" => {
             let identifier = arguments.next().unwrap();
@@ -39,9 +37,11 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
             let typed_value = i32::from_str(raw_value).unwrap();
 
             data_table.insert(String::from(identifier), typed_value);
-
-            println!("SET command");            
-        }
+        },
+        "FLUSHDB" => {
+            data_table.clear();
+            println!("Keys have been flushed.");
+        },
         _ => {
             println!("Unknown command.")
         }
