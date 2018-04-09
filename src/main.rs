@@ -8,11 +8,8 @@ use std::collections::HashMap;
 
 fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>) {
     let mut buffer = [0; 128];
-
-    let payload_size = stream.read(&mut buffer).unwrap();
-    let request_string = str::from_utf8(&buffer).unwrap();
-
-    let mut arguments = request_string.split_whitespace();
+    let _payload_size = stream.read(&mut buffer).unwrap();
+    let mut arguments = str::from_utf8(&buffer).unwrap().split_whitespace();
     let command = arguments.next().unwrap();
 
     match command {
@@ -56,9 +53,6 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
     }
 
     println!("accepted incoming connection.");
-    println!("Size: {}", payload_size);
-    println!("Request: {}", request_string);
-
     println!("Data table: ");
 
     for (key, value) in data_table {
