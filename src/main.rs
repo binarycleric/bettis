@@ -24,13 +24,13 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
                 Some(v) => {
                     let rsp = format!("{}\n{}", identifier, v);
                     let _ = stream.write(rsp.as_bytes());
-                },
+                }
                 None => {
                     let rsp = format!("{}\n(null)", identifier);
                     let _ = stream.write(rsp.as_bytes());
                 }
             }
-        },
+        }
         "INCR" => {
             let identifier = arguments.next().unwrap();
 
@@ -40,21 +40,19 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
             if let Some(value) = data_table.get_mut(identifier) {
                 *value = *value + 1;
             }
-        },
+        }
         "SET" => {
             let identifier = arguments.next().unwrap();
             let raw_value = arguments.next().unwrap();
             let typed_value = i32::from_str(raw_value).unwrap();
 
             data_table.insert(String::from(identifier), typed_value);
-        },
+        }
         "FLUSHDB" => {
             data_table.clear();
             println!("Keys have been flushed.");
-        },
-        _ => {
-            println!("Unknown command.")
         }
+        _ => println!("Unknown command."),
     }
 
     println!("accepted incoming connection.");
@@ -64,7 +62,7 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
     println!("Data table: ");
 
     for (key, value) in data_table {
-        println!("{} --- {}", key, value);        
+        println!("{} --- {}", key, value);
     }
 
     println!("\n\n");
