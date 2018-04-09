@@ -17,6 +17,20 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
 
     match command {
         "GET" => {
+            let identifier = arguments.next().unwrap();
+            let value = data_table.get(identifier);
+
+            match value {
+                Some(v) => {
+                    let rsp = format!("{}\n{}", identifier, v);
+                    let _ = stream.write(rsp.as_bytes());
+                },
+                None => {
+                    let rsp = format!("{}\n(null)", identifier);
+                    let _ = stream.write(rsp.as_bytes());
+                }
+            }
+
             println!("GET command");
         },
         "SET" => {
@@ -44,8 +58,6 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
     }
 
     println!("\n\n");
-
-    stream.write(b"Done.\r\n").unwrap();
 }
 
 fn main() {
