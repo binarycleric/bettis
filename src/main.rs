@@ -31,6 +31,16 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
                 }
             }
         },
+        "INCR" => {
+            let identifier = arguments.next().unwrap();
+
+            if data_table.contains_key(identifier) == false {
+                data_table.insert(identifier.to_string(), 0);
+            }
+            if let Some(value) = data_table.get_mut(identifier) {
+                *value = *value + 1;
+            }
+        },
         "SET" => {
             let identifier = arguments.next().unwrap();
             let raw_value = arguments.next().unwrap();
