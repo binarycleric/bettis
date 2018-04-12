@@ -37,48 +37,20 @@ println!("{:?}", command_size);
 
 
 
+
 // TODO: Name this something else.
 pub mod redis {
     pub mod types {
         #[derive(Debug, PartialEq)]
-        pub struct RString(String);
-
-        #[derive(Debug, PartialEq)]
-        pub struct RInt(i64);
-
-        #[derive(Debug, PartialEq)]
-        pub struct RArray(Vec<Primitives>);
-
-        #[derive(Debug, PartialEq)]
         pub enum Primitives {
-            Array(RArray),
-            String(RString),
-            Int(RInt),
-        }
-
-        impl RString {
-            // $6\r\nselect
-            // TODO: Return result instead.
-            fn from_vector(raw: Vec<String>) -> RString {
-                let (_, size) = raw.first().unwrap().split_at(1);
-                let size = size.parse::<usize>().unwrap();
-                let mut value = raw.last().unwrap().to_string();
-
-                value.truncate(size);
-
-                return RString(value);
-            }
-
-            // $6\r\nselect
-            // TODO: Return result instead.
-            fn from_incoming(incoming: Incoming) -> RString {
-                let (string, _) = incoming.data.split_at(incoming.size);
-                return RString(string.to_string());
-            }
+            Array(Vec<Primitives>),
+            String(String),
+            Int(i64),
         }
 
         #[derive(Debug, PartialEq)]
         enum TypeTokens {
+            SimpleString,
             BulkString,
             Integer,
             Array,
@@ -87,18 +59,11 @@ pub mod redis {
         impl TypeTokens {
             fn to_type_token(token: String) -> Option<TypeTokens> {
                 match token.as_str() {
+                    "+" => Some(TypeTokens::SimpleString),
                     "$" => Some(TypeTokens::BulkString),
                     ":" => Some(TypeTokens::Integer),
                     "*" => Some(TypeTokens::Array),
                     _ => None,
-                }
-            }
-
-            fn to_char(&self) -> char {
-                match *self {
-                    TypeTokens::BulkString => '$',
-                    TypeTokens::Integer => ':',
-                    TypeTokens::Array => '*',
                 }
             }
         }
@@ -111,16 +76,27 @@ pub mod redis {
         }
 
         impl Incoming {
+
+            // Need to double check that bulk strings actually work since thet
+            // can be up to 512mb in length and include "\r\n" characters.
             fn to_primitive(&self) -> Option<Primitives> {
                 match self.token {
                     TypeTokens::BulkString => {
                         let (string, _) = self.data.split_at(self.size);
-                        let rstring = RString(string.to_string());
-
-                        return Some(Primitives::String(rstring));
-                    }
+                        return Some(Primitives::String(string.to_string()));
+                    },
+                    TypeTokens::SimpleString => {
+                        return Some(Primitives::String(self.data.to_string()));
+                    },
                     _ => None
                 }
+            }
+
+            // TODO: Figure out size of the parsed incoming data.
+            // Maybe we don't even need to expose this since they only
+            // things that care about size are arrays and bulk strings.
+            fn size(&self) -> usize {
+                return 999;
             }
 
             fn from_string(incoming: String) -> Incoming {
@@ -140,46 +116,29 @@ pub mod redis {
 
         #[cfg(test)]
         mod tests {
-            use super::*;
 
             #[test]
-            fn it_builds_incoming_from_raw_string() {
+            fn it_builds_incoming_from_simple_string() {
+                let request = "+OK\r\n".to_string();
+                let incoming = super::Incoming::from_string(request);
+                let expected_primitive = super::Primitives::String("OK".to_string());
+
+                assert_eq!(incoming.token, super::TypeTokens::SimpleString);
+                assert_eq!(incoming.size, 2);
+                assert_eq!(incoming.data, "OK".to_string());
+                assert_eq!(incoming.to_primitive().unwrap(), expected_primitive);
+            }
+
+            #[test]
+            fn it_builds_incoming_from_bulk_string() {
                 let request = "$6\r\nselect".to_string();
                 let incoming = super::Incoming::from_string(request);
-                let expected_rstring = super::RString("select".to_string());
-                let expected_primitive = super::Primitives::String(expected_rstring);
+                let expected_primitive = super::Primitives::String("select".to_string());
 
                 assert_eq!(incoming.token, super::TypeTokens::BulkString);
                 assert_eq!(incoming.size, 6);
                 assert_eq!(incoming.data, "select".to_string());
                 assert_eq!(incoming.to_primitive().unwrap(), expected_primitive);
-            }
-
-            #[test]
-            fn it_builds_redis_string() {
-                let expected = "select".to_string();
-                let raw = vec!["$6".to_string(), expected.clone()];
-                let rstring = super::RString::from_vector(raw);
-
-                assert_eq!(rstring, RString(expected.clone()));
-            }
-
-            #[test]
-            fn it_builds_redis_string_with_multi_digit_length() {
-                let expected = "AAAAAAAAAAA".to_string();
-                let raw = vec!["$11".to_string(), expected.clone()];
-                let rstring = super::RString::from_vector(raw);
-
-                assert_eq!(rstring, RString(expected.clone()));
-            }
-
-            #[test]
-            fn it_builds_redis_string_discarding_extra_values() {
-                let expected = "select_zzzzz".to_string();
-                let raw = vec!["$16".to_string(), expected.clone()];
-                let rstring = super::RString::from_vector(raw);
-
-                assert_eq!(rstring, RString(expected.clone()));
             }
         }
     }
