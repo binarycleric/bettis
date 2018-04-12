@@ -68,8 +68,16 @@ pub mod redis {
 
                 return RString(value);
             }
+
+            // $6\r\nselect
+            // TODO: Return result instead.
+            fn from_incoming(incoming: Incoming) -> RString {
+                let (string, _) = incoming.data.split_at(incoming.size);
+                return RString(string.to_string());
+            }
         }
 
+        #[derive(Debug, PartialEq)]
         enum TypeTokens {
             BulkString,
             Integer,
@@ -86,7 +94,7 @@ pub mod redis {
                 }
             }
 
-            fn value(&self) -> char {
+            fn to_char(&self) -> char {
                 match *self {
                     TypeTokens::BulkString => '$',
                     TypeTokens::Integer => ':',
@@ -95,6 +103,7 @@ pub mod redis {
             }
         }
 
+        #[derive(Debug, PartialEq)]
         struct Incoming {
             token: TypeTokens,
             size: usize,
@@ -118,16 +127,11 @@ pub mod redis {
 
 
         pub fn build_redis_value(raw: String) -> Primitives {
-            let mut bundle = raw.split("\r\n");
-            let type_info = bundle.next().unwrap().to_string();
-            let (rtype, _) = type_info.split_at(1);
+            let incoming = Incoming::from_string(raw);
 
-            match rtype {
-                "$" => {
-                    let rstring_raw = bundle.next().unwrap().to_string();
-                    let rstring_data = vec![type_info.clone(), rstring_raw];
-                    let rstring = RString::from_vector(rstring_data);
-
+            match incoming.token {
+                TypeTokens::BulkString => {
+                    let rstring = RString::from_incoming(incoming);
                     return Primitives::String(rstring);
                 }
                 _ => {
@@ -137,9 +141,22 @@ pub mod redis {
         }
 
 
+
+
+
         #[cfg(test)]
         mod tests {
             use super::*;
+
+            #[test]
+            fn it_builds_incoming_from_raw_string() {
+                let request = "$6\r\nselect".to_string();
+                let incoming = super::Incoming::from_string(request);
+
+                assert_eq!(incoming.token, super::TypeTokens::BulkString);
+                assert_eq!(incoming.size, 6);
+                assert_eq!(incoming.data, "select".to_string());
+            }
 
             #[test]
             fn it_builds_redis_string() {
