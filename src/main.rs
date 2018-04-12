@@ -44,7 +44,7 @@ pub mod redis {
         pub struct RString(String);
 
         #[derive(Debug, PartialEq)]
-        pub struct RInt(i32);
+        pub struct RInt(i64);
 
         #[derive(Debug, PartialEq)]
         pub struct RArray(Vec<Primitives>);
@@ -111,6 +111,18 @@ pub mod redis {
         }
 
         impl Incoming {
+            fn to_primitive(&self) -> Option<Primitives> {
+                match self.token {
+                    TypeTokens::BulkString => {
+                        let (string, _) = self.data.split_at(self.size);
+                        let rstring = RString(string.to_string());
+
+                        return Some(Primitives::String(rstring));
+                    }
+                    _ => None
+                }
+            }
+
             fn from_string(incoming: String) -> Incoming {
                 let mut bundle = incoming.split("\r\n");
                 let type_info = bundle.next().unwrap().to_string();
@@ -126,24 +138,6 @@ pub mod redis {
         }
 
 
-        pub fn build_redis_value(raw: String) -> Primitives {
-            let incoming = Incoming::from_string(raw);
-
-            match incoming.token {
-                TypeTokens::BulkString => {
-                    let rstring = RString::from_incoming(incoming);
-                    return Primitives::String(rstring);
-                }
-                _ => {
-                    return Primitives::String(RString("FAIL".to_string()));
-                }
-            }
-        }
-
-
-
-
-
         #[cfg(test)]
         mod tests {
             use super::*;
@@ -152,10 +146,13 @@ pub mod redis {
             fn it_builds_incoming_from_raw_string() {
                 let request = "$6\r\nselect".to_string();
                 let incoming = super::Incoming::from_string(request);
+                let expected_rstring = super::RString("select".to_string());
+                let expected_primitive = super::Primitives::String(expected_rstring);
 
                 assert_eq!(incoming.token, super::TypeTokens::BulkString);
                 assert_eq!(incoming.size, 6);
                 assert_eq!(incoming.data, "select".to_string());
+                assert_eq!(incoming.to_primitive().unwrap(), expected_primitive);
             }
 
             #[test]
