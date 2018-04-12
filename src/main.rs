@@ -35,42 +35,137 @@ println!("{:?}", command_size);
 
 */
 
-pub mod commands {
-    #[cfg(test)]
-    mod tests {
 
-        #[test]
-        fn it_returns_basic_string_values() {
-            assert_eq!(super::build_value(String::from("$1\r\n1\r\n")), "1");
-            assert_eq!(super::build_value(String::from("$2\r\n15\r\n")), "15");
-            assert_eq!(super::build_value(String::from("$3\r\n152\r\n")), "152");
+
+// TODO: Name this something else.
+pub mod redis {
+    pub mod types {
+        #[derive(Debug, PartialEq)]
+        pub struct RString(String);
+
+        #[derive(Debug, PartialEq)]
+        pub struct RInt(i32);
+
+        #[derive(Debug, PartialEq)]
+        pub struct RArray(Vec<Primitives>);
+
+        #[derive(Debug, PartialEq)]
+        pub enum Primitives {
+            Array(RArray),
+            String(RString),
+            Int(RInt),
         }
 
-        #[test]
-        fn it_ignores_garbage_values() {
-            assert_eq!(super::build_value(String::from("$1\r\n153\r\n")), "1");
-            assert_eq!(super::build_value(String::from("$2\r\n153\r\n")), "15");
+        impl RString {
+            // $6\r\nselect
+            // TODO: Return result instead.
+            fn from_vector(raw: Vec<String>) -> RString {
+                let (_, size) = raw.first().unwrap().split_at(1);
+                let size = size.parse::<usize>().unwrap();
+                let mut value = raw.last().unwrap().to_string();
+
+                value.truncate(size);
+
+                return RString(value);
+            }
         }
-    }
 
-    pub fn build_value(payload: String) -> String {
-        let mut value_tokens = payload.split("\r\n");
-        let mut type_info = value_tokens.next().unwrap().chars();
+        enum TypeTokens {
+            BulkString,
+            Integer,
+            Array,
+        }
 
-        // ["$2", "15"]
+        impl TypeTokens {
+            fn to_type_token(token: String) -> Option<TypeTokens> {
+                match token.as_str() {
+                    "$" => Some(TypeTokens::BulkString),
+                    ":" => Some(TypeTokens::Integer),
+                    "*" => Some(TypeTokens::Array),
+                    _ => None,
+                }
+            }
 
-        match type_info.next().unwrap() {
-            '$' => {
-                let value_length = type_info.as_str().parse::<usize>().unwrap();
-                let mut value = String::from(value_tokens.next().unwrap());
+            fn value(&self) -> char {
+                match *self {
+                    TypeTokens::BulkString => '$',
+                    TypeTokens::Integer => ':',
+                    TypeTokens::Array => '*',
+                }
+            }
+        }
 
-                value.truncate(value_length);
+        struct Incoming {
+            token: TypeTokens,
+            size: usize,
+            data: String,
+        }
 
-                return value;
-            },
-            _ => {
-                // Do nothing.
-                return String::from("999");
+        impl Incoming {
+            fn from_string(incoming: String) -> Incoming {
+                let mut bundle = incoming.split("\r\n");
+                let type_info = bundle.next().unwrap().to_string();
+                let (rtype, size) = type_info.split_at(1);
+                let data: Vec<String> = bundle.map(|s| s.to_string()).collect();
+
+                return Incoming {
+                    token: TypeTokens::to_type_token(rtype.to_string()).unwrap(),
+                    size: size.parse::<usize>().unwrap(),
+                    data: data.join("\r\n"),
+                }
+            }
+        }
+
+
+        pub fn build_redis_value(raw: String) -> Primitives {
+            let mut bundle = raw.split("\r\n");
+            let type_info = bundle.next().unwrap().to_string();
+            let (rtype, _) = type_info.split_at(1);
+
+            match rtype {
+                "$" => {
+                    let rstring_raw = bundle.next().unwrap().to_string();
+                    let rstring_data = vec![type_info.clone(), rstring_raw];
+                    let rstring = RString::from_vector(rstring_data);
+
+                    return Primitives::String(rstring);
+                }
+                _ => {
+                    return Primitives::String(RString("FAIL".to_string()));
+                }
+            }
+        }
+
+
+        #[cfg(test)]
+        mod tests {
+            use super::*;
+
+            #[test]
+            fn it_builds_redis_string() {
+                let expected = "select".to_string();
+                let raw = vec!["$6".to_string(), expected.clone()];
+                let rstring = super::RString::from_vector(raw);
+
+                assert_eq!(rstring, RString(expected.clone()));
+            }
+
+            #[test]
+            fn it_builds_redis_string_with_multi_digit_length() {
+                let expected = "AAAAAAAAAAA".to_string();
+                let raw = vec!["$11".to_string(), expected.clone()];
+                let rstring = super::RString::from_vector(raw);
+
+                assert_eq!(rstring, RString(expected.clone()));
+            }
+
+            #[test]
+            fn it_builds_redis_string_discarding_extra_values() {
+                let expected = "select_zzzzz".to_string();
+                let raw = vec!["$16".to_string(), expected.clone()];
+                let rstring = super::RString::from_vector(raw);
+
+                assert_eq!(rstring, RString(expected.clone()));
             }
         }
     }
