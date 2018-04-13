@@ -186,6 +186,7 @@ enum RedisAvailableCommand {
 }
 
 impl RedisAvailableCommand {
+    // TODO: Automate this so I don't have to copy+paste a bunch of stuff.
     fn from_string(command: String) -> Result<RedisAvailableCommand, &'static str> {
         if command == "select" {
             return Ok(RedisAvailableCommand::Select);
