@@ -178,14 +178,34 @@ pub mod tests {
     }
 }
 
+#[derive(Debug)]
+enum RedisAvailableCommand {
+    Select,
+    Set,
+    Get,
+}
 
+impl RedisAvailableCommand {
+    fn from_string(command: String) -> Result<RedisAvailableCommand, &'static str> {
+        if command == "select" {
+            return Ok(RedisAvailableCommand::Select);
+        }
 
+        if command == "set" {
+            return Ok(RedisAvailableCommand::Set);
+        }
 
+        if command == "get" {
+            return Ok(RedisAvailableCommand::Get);
+        }
 
+        return Err("Invalid redis command");
+    }
+}
 
 #[derive(Debug)]
 struct RedisCommand {
-    command: String,
+    command: RedisAvailableCommand,
     value: RedisValue,
 }
 
@@ -200,40 +220,70 @@ fn build_command(command: RedisValue) -> RedisCommand {
     if command.rtype == RedisTypes::RedisArray {
         let command_array = command.to_array();
         let command_name = command_array[0].to_bulk_string();
+        let command = RedisAvailableCommand::from_string(command_name);
+        let value: RedisValue;
 
-        if command_name == "select".to_string() {
-            let database_id_data = &command_array[1].data;
-            let database_id = RedisValue::new(database_id_data.to_string());
-
-            return RedisCommand {
-                command: "select".to_string(),
-                value: database_id,
+        match command {
+            Ok(_) => {
+                let value_string = &command_array[1].data;
+                value = RedisValue::new(value_string.to_string());
+            }
+            Err(msg) => {
+                panic!(msg);
             }
         }
 
-        if command_name == "set".to_string() {
-            let set_value_data = &command_array[1].data;
-
-
-            println!("{:?}", set_value_data);
-
-
-            let set_value = RedisValue::new(set_value_data.to_string());
-
-            return RedisCommand {
-                command: "set".to_string(),
-                value: set_value,
-            }
-        }
+        return RedisCommand { command: command.unwrap(), value: value }
     }
-    panic!("Invalid redis command.")
+    panic!("Improperly formed request.")
 }
 
-fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>) {
+fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, RedisValue>) {
+    let mut buffer = vec![0; 128];
+    let payload_size = stream.read(&mut buffer).unwrap();
 
+    if payload_size == 0 {
+        return;
+    }
 
+    buffer.truncate(payload_size);
+    let request_string = str::from_utf8(&buffer).unwrap().to_string();
+    println!("{:?}", request_string);
 
+    let redis_value = RedisValue::new(request_string);
+    let command = build_command(redis_value);
 
+    match command.invoke(stream) {
+        Ok(response) => {
+            stream.write(response.as_bytes()).unwrap();
+
+            process_command(stream, data_table);
+        }
+        Err(_) => {
+            stream.write(":1\r\n".as_bytes()).unwrap();
+        }
+    }
+
+    println!("accepted incoming connection.");
+    println!("Data table: ");
+
+    for (key, value) in data_table {
+        println!("{:?} --- {:?}", key, value);
+    }
+
+    println!("\n\n");
+}
+
+fn main() {
+    let mut data_table = HashMap::new();
+    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+
+    println!("listening started, ready to accept");
+
+    for stream in listener.incoming() {
+        process_command(&mut stream.unwrap(), &mut data_table);
+    }
+}
 
 /*
     match command {
@@ -275,70 +325,4 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
         }
         _ => println!("Unknown command."),
     }
-*/
-
-}
-
-fn process_command(stream: &mut TcpStream) {
-    let mut buffer = vec![0; 128];
-    let payload_size = stream.read(&mut buffer).unwrap();
-
-    if payload_size == 0 {
-        return;
-    }
-
-    buffer.truncate(payload_size);
-    let request_string = str::from_utf8(&buffer).unwrap().to_string();
-    println!("{:?}", request_string);
-
-    let redis_value = RedisValue::new(request_string);
-    let command = build_command(redis_value);
-
-    match command.invoke(stream) {
-        Ok(response) => {
-            stream.write(response.as_bytes());
-
-            process_command(stream);
-        }
-        Err(_) => {
-            stream.write(":1".as_bytes());
-        }
-    }
-    // process_command(stream);
-
-    // stream.write(":1\r\n".as_bytes()).unwrap();
-
-    println!("accepted incoming connection.");
-//        println!("Data table: ");
-
-//        for (key, value) in data_table {
-//            println!("{} --- {}", key, value);
-//        }
-
-    println!("\n\n");
-
-
-}
-
-fn main() {
-//    let mut data_table = HashMap::new();
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
-
-    println!("listening started, ready to accept");
-
-    for stream in listener.incoming() {
-        process_command(&mut stream.unwrap());
-    }
-}
-
-
-/*
-
-            let mut buffer2 = vec![0; 128];
-            let payload_size2 = stream.read(&mut buffer2).unwrap();
-
-            buffer2.truncate(payload_size);
-            let request_string2 = str::from_utf8(&buffer).unwrap().to_string();
-
-            println!("{:?}", request_string2);
 */
