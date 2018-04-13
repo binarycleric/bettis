@@ -31,313 +31,170 @@ println!("{:?}", command_list);
 let command_size = command_list.next().unwrap();
 println!("{:?}", command_size);
 
-
-
 */
 
 
-/*
 
-// TODO: Name this something else.
-pub mod redis {
-    pub mod types {
 
-        #[derive(Debug, PartialEq)]
-        struct RedisArray(Vec<Primitives>);
+#[derive(Debug, PartialEq, Copy)]
+enum RedisTypes {
+    RedisBulkString,
+    RedisSimpleString,
+    RedisArray,
+}
 
-        #[derive(Debug, PartialEq)]
-        struct RedisSimpleString(String);
+#[derive(Debug, Copy)]
+struct RedisValue {
+    rtype: RedisTypes,
+    data: String, // Cause YOLO.
+}
 
-        #[derive(Debug, PartialEq)]
-        struct RedisBulkString(String);
+const REDIS_SEPARATOR: &'static str = "\r\n";
 
-        #[derive(Debug, PartialEq)]
-        struct RedisInteger(i64);
+impl RedisValue {
+    pub fn new(value_string: String) -> RedisValue {
+        let type_token = value_string.chars().next().unwrap();
 
-        trait RedisPrimitive {}
-        impl RedisPrimitive for RedisSimpleString {}
-        impl RedisPrimitive for RedisBulkString {}
-
-        impl ToString for RedisBulkString {
-            fn to_string(&self) -> String {
-                return "derp".to_string();
-            }
-        }
-
-        impl ToString for RedisSimpleString {
-            fn to_string(&self) -> String {
-                return "derp".to_string();
-            }
-        }
-
-        #[derive(Debug, PartialEq)]
-        pub enum Primitives {
-            Array(RedisArray),
-            SimpleString(RedisSimpleString),
-            BulkString(RedisBulkString),
-            Int(RedisInteger),
-        }
-
-        #[derive(Debug, PartialEq)]
-        pub struct RedisType {
-            type_token: TypeTokens,
-        }
-
-        pub fn build_primitive(incoming: String) -> Box<RedisPrimitive> {
-            let rtype = RedisType::from_char(incoming.chars().next().unwrap());
-            let primitive = rtype.build_primitive(incoming);
-
-            return primitive;
-        }
-
-        impl RedisType {
-
-            // Need to double check that bulk strings actually work since thet
-            // can be up to 512mb in length and include "\r\n" characters.
-            pub fn build_primitive(&self, incoming: String) -> Box<RedisPrimitive> {
-                // Simple string. This code sucks.
-                if self.type_token == TypeTokens::SimpleString {
-                    let mut bundle = incoming.split("\r\n");
-                    let (_, simple_string) = bundle.next().unwrap().split_at(1);
-
-                    return Box::new(RedisSimpleString(simple_string.to_string()));
-                } else {
-                    let mut bundle = incoming.split("\r\n");
-                    let type_info = bundle.next().unwrap().to_string();
-                    let (rtype, size) = type_info.split_at(1);
-                    let data: Vec<String> = bundle.map(|s| s.to_string()).collect();
-
-                    return Box::new(RedisBulkString(data.join("\r\n").to_string()));
+        match type_token {
+            '+' => {
+                return RedisValue {
+                    rtype: RedisTypes::RedisSimpleString,
+                    data: value_string,
+                }
+            },
+            '$' => {
+                return RedisValue {
+                    rtype: RedisTypes::RedisBulkString,
+                    data: value_string,
                 }
             }
-
-            // TODO: Actual error handling.
-            pub fn from_char(token: char) -> RedisType {
-                let type_token = TypeTokens::from_string(token).unwrap();
-
-                return RedisType {
-                    type_token: type_token,
+            '*' => {
+                return RedisValue {
+                    rtype: RedisTypes::RedisArray,
+                    data: value_string,
                 }
             }
+            _ => {
+                panic!("Invalid type.")
+            }
         }
+    }
 
-        #[derive(Debug, PartialEq)]
-        enum TypeTokens {
-            SimpleString,
-            BulkString,
-            Integer,
-            Array,
-        }
+    // TODO: Memory usage is what?
+    pub fn to_array(&self) -> Vec<RedisValue> {
+        let mut bundle = self.data.split(REDIS_SEPARATOR);
+        let (rtype, size) = bundle.next().unwrap().split_at(1);
+        let size = size.parse::<usize>().unwrap();
+        let mut redis_array = Vec::with_capacity(size);
 
-        impl TypeTokens {
-            fn from_string(token: char) -> Option<TypeTokens> {
-                match token {
-                    '+' => Some(TypeTokens::SimpleString),
-                    '$' => Some(TypeTokens::BulkString),
-                    ':' => Some(TypeTokens::Integer),
-                    '*' => Some(TypeTokens::Array),
-                    _ => None,
+        loop {
+            match bundle.next() {
+                Some(type_token) => {
+                    // Why do we need this?
+                    // Figure out why it is adding an empty atring at the end.
+                    // ["*2", "$6", "select", "$2", "15", ""]
+                    if type_token.len() == 0 {
+                        break;
+                    }
+
+                    if type_token.chars().next().unwrap() == '+' {
+                        let value_string = type_token.to_string();
+
+                        redis_array.push(RedisValue::new(value_string))
+                    } else {
+                        let data = bundle.next();
+                        let value_string = vec![type_token, data.unwrap()].join(REDIS_SEPARATOR);
+
+                        redis_array.push(RedisValue::new(value_string))
+                    }
                 }
+                None => { break }
             }
         }
 
-        #[cfg(test)]
-        mod tests {
+        return redis_array;
+    }
 
-            #[test]
-            fn it_builds_incoming_from_simple_string() {
-                let request = "+OK\r\n".to_string();
-                let primitive = super::build_primitive(request);
+    // TODO: Error handling.
+    pub fn to_bulk_string(&self) -> String {
+        let mut bundle = self.data.split(REDIS_SEPARATOR);
+        let (rtype, size) = bundle.next().unwrap().split_at(1);
+        let size = size.parse::<usize>().unwrap();
+        let (bulk_string, _) = bundle.next().unwrap().split_at(size);
 
-                assert_eq!("OK".to_string(), primitive.borrow().to_string());
-            }
-
-            #[test]
-            fn it_builds_incoming_from_bulk_string() {
-                let request = "$6\r\nselect".to_string();
-                let primitive = super::build_primitive(request);
-
-                assert_eq!("select".to_string(), primitive.borrow().to_string());
-            }
+        // TODO handle size for bulk string.
+        if rtype.chars().next().unwrap() == '$' {
+            return bulk_string.to_string();
         }
+        panic!("Not a bulk string");
+    }
+
+    // TODO: Error handling.
+    pub fn to_simple_string(&self) -> String {
+        let (type_token, data) = self.data.split(REDIS_SEPARATOR).next().unwrap().split_at(1);
+        if type_token.chars().next().unwrap() == '+' {
+            return data.to_string();
+        }
+        panic!("Not a simple string");
     }
 }
 
 #[cfg(test)]
-mod tests {
-
+pub mod tests {
     #[test]
-    fn it_builds_command() {
-        let request = "$6\r\nselect".to_string();
-        let redis_value = super::RedisValue::from_string(request);
+    fn it_parses_bulk_string() {
+        let request = "$6\r\nselect\r\n".to_string();
+        let redis_value =  super::RedisValue::new(request);
 
-        assert_eq!(false, true);
-    }
-
-    #[test]
-    fn it_parses_redis_type() {
-        let rtype = super::RedisTypes::parse_type('$');
-        assert_eq!(rtype, Ok(super::RedisTypes::BulkString));
-
-        let rtype = super::RedisTypes::parse_type('G');
-        assert_eq!(rtype, Err("Invalid redis type"));
+        assert_eq!("select".to_string(), redis_value.to_bulk_string());
     }
 
     #[test]
-    fn it_builds_redis_bulk_string() {
-        let size = 6;
-        let bulk_string = super::BulkString::build(size, "select".to_string());
+    fn it_parses_simple_string() {
+        let request = "+Ok\r\n".to_string();
+        let redis_value =  super::RedisValue::new(request);
 
-        assert_eq!("select".to_string(), bulk_string.value);
+        assert_eq!("Ok".to_string(), redis_value.to_simple_string());
     }
 
     #[test]
-    fn it_truncates_excess_string_data() {
-        let size = 6;
-        let bulk_string = super::BulkString::build(size, "selectzzzzz".to_string());
+    fn it_parses_array() {
+        let request = "*2\r\n$6\r\nselect\r\n$2\r\n15\r\n".to_string();
+        let redis_value = super::RedisValue::new(request);
+        let array = redis_value.to_array();
 
-        assert_eq!("select".to_string(), bulk_string.value);
+        assert_eq!(2, array.len());
+        assert_eq!("select", array[0].to_bulk_string());
+        assert_eq!("15", array[1].to_bulk_string());
     }
 }
 
-#[derive(Debug, PartialEq)]
-enum RedisTypes {
-    BulkString,
-    SimpleString,
+
+
+
+
+
+
+struct RedisCommand {
+    command: String,
+    value: RedisValue,
 }
 
-impl RedisTypes {
-    fn parse_type(token: char) -> Result<RedisTypes, &'static str> {
-        match token {
-            '$' => Ok(RedisTypes::BulkString),
-            _ => Err("Invalid redis type"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq)]
-struct BulkString {
-    value: String,
-}
-
-impl BulkString {
-    // Redis bulk strings have a set size.
-    fn build(size: usize, raw: String) -> BulkString {
-        let (bulk_string, _) = raw.split_at(size);
-
-        return BulkString {
-            value: bulk_string.to_string(),
-        }
-    }
-}
-
-struct SimpleString {
-    value: String,
-}
-
-struct RedisValue<T> {
-    rtype: RedisTypes,
-    value: T,
-}
-
-impl RedisValue<SimpleString> {
-    pub fn from_string(raw: String) -> RedisValue<SimpleString> {
-        let (_, redis_value) = raw.split_at(1);
-
-        return RedisValue {
-            rtype: RedisTypes::SimpleString,
-            value: SimpleString { value: redis_value.to_string() },
-        }
-
-    }
-}
-
-impl RedisValue<BulkString> {
-    pub fn from_string(raw: String) -> RedisValue<BulkString> {
-        let mut bundle = raw.split("\r\n");
-        let (_, size) = bundle.next().unwrap().split_at(1);
-        let size: usize = size.parse().unwrap();
-        let string_data = bundle.next().unwrap();
-        let redis_value = BulkString::build(size, string_data.to_string());
-
-        return RedisValue {
-            rtype: RedisTypes::BulkString,
-            value: redis_value,
-        }
-    }
-}
-
-*/
 
 
+fn build_command(command: RedisValue) -> RedisCommand {
+    if command.rtype == RedisTypes::RedisArray {
+        let command_name = command.to_array()[0].to_bulk_string();
+        if command_name == "select".to_string() {
+            let database_id = command.to_array()[1].clone();
 
-pub mod rustis {
-
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn it_does_stuff() {
-            let request = "$6\r\nselect".to_string();
-            let value = super::Value::from_string(request);
-
-            assert_eq!(true, false);
-        }
-    }
-
-    enum SupportedType {
-        SimpleString,
-        BulkString,
-    }
-
-    struct Value<T> {
-        rtype: SupportedType,
-        data: String,
-        typed_data: T,
-    }
-
-    impl Value<String> {
-        fn from_string(incoming: String) -> Result<Value<String>, &'static str> {
-            let type_token = incoming.chars().next();
-
-            match type_token {
-                Some('$') => {
-                    let value = Value<String> {
-                        rtype: SupportedType::SimpleString,
-                        data: incoming,
-                    };
-                    return Ok(value);
-                }
-                _ => {
-                    return Err("Sadface");
-                }
+            return RedisCommand {
+                command: "select".to_string(),
+                value: database_id
             }
         }
     }
-}
-
-
-
-fn build_command(command: String) {
-    println!("{:?}", command);
-
-    match command.chars().next() {
-        Some(token) => {
-            match token {
-                '$' => {
-                    let mut bundle = command.split("\r\n");
-                    let (_, size) = bundle.next().unwrap().split_at(1);
-
-                    println!("{:?}", size);
-                }
-                _ => {
-
-                }
-            }
-        },
-        None => {
-            // Bad!
-        }
-    }
+    panic!("Invalid redis command.")
 }
 
 fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>) {
@@ -345,13 +202,17 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
     let payload_size = stream.read(&mut buffer).unwrap();
 
     buffer.truncate(payload_size);
-    let command_string = str::from_utf8(&buffer).unwrap().to_string();
 
-    build_command(command_string);
+    let request_string = str::from_utf8(&buffer).unwrap().to_string();
+    let redis_value = RedisValue::new(request_string);
 
-    let mut arguments = str::from_utf8(&buffer).unwrap().split_whitespace();
-    let command = arguments.next().unwrap();
+    println!("{:?}", redis_value);
 
+    build_command(redis_value);
+
+
+
+/*
     match command {
         "GET" => {
             let identifier = arguments.next().unwrap();
@@ -391,6 +252,7 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
         }
         _ => println!("Unknown command."),
     }
+*/
 
     println!("accepted incoming connection.");
     println!("Data table: ");
