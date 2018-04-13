@@ -52,7 +52,17 @@ const REDIS_SEPARATOR: &'static str = "\r\n";
 
 impl RedisValue {
     pub fn new(value_string: String) -> RedisValue {
-        let type_token = value_string.chars().next().unwrap();
+        let type_token: char;
+
+        match value_string.chars().next() {
+            Some(value) => {
+                type_token = value
+            }
+            None => {
+                println!("invalid: {:?}", value_string);
+                panic!("Invalid redis value.");
+            }
+        }
 
         match type_token {
             '+' => {
@@ -179,12 +189,18 @@ struct RedisCommand {
     value: RedisValue,
 }
 
+impl RedisCommand {
+    fn invoke(&self, stream: &mut TcpStream) -> Result<String, &'static str> {
+        return Ok("+OK\r\n".to_string());
+    }
+}
 
 
 fn build_command(command: RedisValue) -> RedisCommand {
     if command.rtype == RedisTypes::RedisArray {
         let command_array = command.to_array();
         let command_name = command_array[0].to_bulk_string();
+
         if command_name == "select".to_string() {
             let database_id_data = &command_array[1].data;
             let database_id = RedisValue::new(database_id_data.to_string());
@@ -192,6 +208,21 @@ fn build_command(command: RedisValue) -> RedisCommand {
             return RedisCommand {
                 command: "select".to_string(),
                 value: database_id,
+            }
+        }
+
+        if command_name == "set".to_string() {
+            let set_value_data = &command_array[1].data;
+
+
+            println!("{:?}", set_value_data);
+
+
+            let set_value = RedisValue::new(set_value_data.to_string());
+
+            return RedisCommand {
+                command: "set".to_string(),
+                value: set_value,
             }
         }
     }
@@ -248,39 +279,34 @@ fn process_request(stream: &mut TcpStream, data_table: &mut HashMap<String, i32>
 
 }
 
-/*
-        let mut buffer = vec![0; 128];
-        let payload_size = stream.read(&mut buffer).unwrap();
-
-        buffer.truncate(payload_size);
-
-        let request_string2 = str::from_utf8(&buffer).unwrap().to_string();
-
-        println!("{:?}\n\n", request_string2);
-        stream.write("+OK\r\n".as_bytes());
-*/
-
-
 fn process_command(stream: &mut TcpStream) {
     let mut buffer = vec![0; 128];
     let payload_size = stream.read(&mut buffer).unwrap();
 
-    buffer.truncate(payload_size);
+    if payload_size == 0 {
+        return;
+    }
 
+    buffer.truncate(payload_size);
     let request_string = str::from_utf8(&buffer).unwrap().to_string();
     println!("{:?}", request_string);
 
     let redis_value = RedisValue::new(request_string);
     let command = build_command(redis_value);
-    println!("{:?}", command);
 
-    if command.command == "select".to_string() {
-        stream.write("+OK\r\n".as_bytes());
+    match command.invoke(stream) {
+        Ok(response) => {
+            stream.write(response.as_bytes());
 
-        process_command(stream);
-    } else {
-        stream.write(":1\r\n".as_bytes()).unwrap();
+            process_command(stream);
+        }
+        Err(_) => {
+            stream.write(":1".as_bytes());
+        }
     }
+    // process_command(stream);
+
+    // stream.write(":1\r\n".as_bytes()).unwrap();
 
     println!("accepted incoming connection.");
 //        println!("Data table: ");
