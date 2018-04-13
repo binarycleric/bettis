@@ -210,32 +210,31 @@ struct RedisCommand {
 }
 
 impl RedisCommand {
+    fn build(command: RedisValue) -> RedisCommand {
+        if command.rtype == RedisTypes::RedisArray {
+            let command_array = command.to_array();
+            let command_name = command_array[0].to_bulk_string();
+            let command = RedisAvailableCommand::from_string(command_name);
+            let value: RedisValue;
+
+            match command {
+                Ok(_) => {
+                    let value_string = &command_array[1].data;
+                    value = RedisValue::new(value_string.to_string());
+                }
+                Err(msg) => {
+                    panic!(msg);
+                }
+            }
+
+            return RedisCommand { command: command.unwrap(), value: value }
+        }
+        panic!("Improperly formed request.")
+    }
+
     fn invoke(&self, stream: &mut TcpStream) -> Result<String, &'static str> {
         return Ok("+OK\r\n".to_string());
     }
-}
-
-
-fn build_command(command: RedisValue) -> RedisCommand {
-    if command.rtype == RedisTypes::RedisArray {
-        let command_array = command.to_array();
-        let command_name = command_array[0].to_bulk_string();
-        let command = RedisAvailableCommand::from_string(command_name);
-        let value: RedisValue;
-
-        match command {
-            Ok(_) => {
-                let value_string = &command_array[1].data;
-                value = RedisValue::new(value_string.to_string());
-            }
-            Err(msg) => {
-                panic!(msg);
-            }
-        }
-
-        return RedisCommand { command: command.unwrap(), value: value }
-    }
-    panic!("Improperly formed request.")
 }
 
 fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, RedisValue>) {
@@ -251,12 +250,11 @@ fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, Redi
     println!("{:?}", request_string);
 
     let redis_value = RedisValue::new(request_string);
-    let command = build_command(redis_value);
-
-    match command.invoke(stream) {
+    match RedisCommand::build(redis_value).invoke(stream) {
         Ok(response) => {
             stream.write(response.as_bytes()).unwrap();
-
+            // TODO: Maybe figure out how to make this an iterator instead of
+            // using recursion.
             process_command(stream, data_table);
         }
         Err(_) => {
