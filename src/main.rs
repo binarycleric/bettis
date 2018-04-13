@@ -162,14 +162,6 @@ pub mod redis {
         }
     }
 }
-*/
-
-
-
-pub mod types {
-}
-
-
 
 #[cfg(test)]
 mod tests {
@@ -274,6 +266,56 @@ impl RedisValue<BulkString> {
         }
     }
 }
+
+*/
+
+
+
+pub mod rustis {
+
+    #[cfg(test)]
+    mod tests {
+        #[test]
+        fn it_does_stuff() {
+            let request = "$6\r\nselect".to_string();
+            let value = super::Value::from_string(request);
+
+            assert_eq!(true, false);
+        }
+    }
+
+    enum SupportedType {
+        SimpleString,
+        BulkString,
+    }
+
+    struct Value<T> {
+        rtype: SupportedType,
+        data: String,
+        typed_data: T,
+    }
+
+    impl Value<String> {
+        fn from_string(incoming: String) -> Result<Value<String>, &'static str> {
+            let type_token = incoming.chars().next();
+
+            match type_token {
+                Some('$') => {
+                    let value = Value<String> {
+                        rtype: SupportedType::SimpleString,
+                        data: incoming,
+                    };
+                    return Ok(value);
+                }
+                _ => {
+                    return Err("Sadface");
+                }
+            }
+        }
+    }
+}
+
+
 
 fn build_command(command: String) {
     println!("{:?}", command);
