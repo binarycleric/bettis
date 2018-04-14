@@ -96,6 +96,11 @@ impl RedisValue {
         let size = size.parse::<usize>().unwrap();
         let mut redis_array = Vec::with_capacity(size);
 
+        // TODO handle size for bulk string.
+        if rtype.chars().next().unwrap() != '*' {
+            panic!("Not a bulk string");
+        }
+
         loop {
             match bundle.next() {
                 Some(type_token) => {
@@ -205,23 +210,39 @@ impl RedisAvailableCommand {
 }
 
 #[derive(Debug)]
+struct RedisDataTable {
+    database_id: u32,
+    data_map: HashMap<String, String>,
+}
+
+impl RedisDataTable {
+    pub fn new(database_id: u32) -> RedisDataTable {
+        return RedisDataTable {
+            database_id: database_id,
+            data_map: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
 struct RedisCommand {
     command: RedisAvailableCommand,
     value: RedisValue,
 }
 
 impl RedisCommand {
-    fn build(command: RedisValue) -> RedisCommand {
-        if command.rtype == RedisTypes::RedisArray {
-            let command_array = command.to_array();
+    fn build(redis_value: RedisValue) -> RedisCommand {
+        if redis_value.rtype == RedisTypes::RedisArray {
+            let command_array = redis_value.to_array();
             let command_name = command_array[0].to_bulk_string();
             let command = RedisAvailableCommand::from_string(command_name);
             let value: RedisValue;
 
             match command {
                 Ok(_) => {
-                    let value_string = &command_array[1].data;
-                    value = RedisValue::new(value_string.to_string());
+                    // ARGH! Only getting the first value.
+                    // let value_string = &command_array[1].data;
+                    value = RedisValue::new(redis_value.data.to_string());
                 }
                 Err(msg) => {
                     panic!(msg);
@@ -233,12 +254,48 @@ impl RedisCommand {
         panic!("Improperly formed request.")
     }
 
-    fn invoke(&self, stream: &mut TcpStream) -> Result<String, &'static str> {
-        return Ok("+OK\r\n".to_string());
+    fn invoke(&self, data_table: &mut RedisDataTable) -> Result<&'static str, &'static str> {
+        match self.command {
+            RedisAvailableCommand::Select => {
+                println!("Invoke select...");
+                println!("{:?}", self.value);
+            }
+            RedisAvailableCommand::Set => {
+                let array = self.value.to_array();
+                let key = &array[1];
+                let value = &array[2];
+
+                data_table.data_map.insert(
+                    key.to_bulk_string().to_string(),
+                    value.to_bulk_string().to_string()
+                );
+
+                println!("Invoke set...");
+                println!("{:?}", array);
+                println!("{:?} -- {:?}", key, value);
+            }
+            RedisAvailableCommand::Get => {
+                let array = self.value.to_array();
+                let key = &array[1];
+                let value = data_table.data_map.get(&key.to_bulk_string());
+
+                println!("Invoke get ...");
+                println!("{:?}", array);
+                println!("{:?} -- {:?}", key, value);
+
+                // TODO: Don't hard-code to simple strings.
+                return Ok("+23\r\n");
+            }
+            _ => {
+
+            }
+        }
+
+        return Ok("+OK\r\n");
     }
 }
 
-fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, RedisValue>) {
+fn process_command(stream: &mut TcpStream, data_table: &mut RedisDataTable) {
     let mut buffer = vec![0; 128];
     let payload_size = stream.read(&mut buffer).unwrap();
 
@@ -251,7 +308,7 @@ fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, Redi
     println!("{:?}", request_string);
 
     let redis_value = RedisValue::new(request_string);
-    match RedisCommand::build(redis_value).invoke(stream) {
+    match RedisCommand::build(redis_value).invoke(data_table) {
         Ok(response) => {
             stream.write(response.as_bytes()).unwrap();
             // TODO: Maybe figure out how to make this an iterator instead of
@@ -265,16 +322,12 @@ fn process_command(stream: &mut TcpStream, data_table: &mut HashMap<String, Redi
 
     println!("accepted incoming connection.");
     println!("Data table: ");
-
-    for (key, value) in data_table {
-        println!("{:?} --- {:?}", key, value);
-    }
-
+    println!("{:?}", data_table);
     println!("\n\n");
 }
 
 fn main() {
-    let mut data_table = HashMap::new();
+    let mut data_table = RedisDataTable::new(15);
     let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
 
     println!("listening started, ready to accept");
