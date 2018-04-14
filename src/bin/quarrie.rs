@@ -6,6 +6,42 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
+struct Server<'a> {
+    ipaddr: &'a str,
+    port: &'a str,
+}
+
+impl<'a> Server<'a> {
+    pub fn new(ipaddr: &'a str, port: &'a str) -> Server<'a> {
+        return Server {
+            ipaddr: ipaddr,
+            port: port,
+        }
+    }
+
+    pub fn start(&self) {
+        // TEMP
+        let mut data_table = quarrie::DataTable::new(15);
+
+        let connection_string = self.ipaddr.to_owned() + ":" + self.port;
+        let listener = TcpListener::bind(connection_string);
+
+        match listener {
+            Ok(l) => {
+                println!("listening started, ready to accept");
+
+                for stream in l.incoming() {
+                    process_command(&mut stream.unwrap(), &mut data_table);
+                }
+            },
+            Err(err) => {
+                println!("{:?}", err)
+            }
+        }
+    }
+}
+
+
 fn process_command(stream: &mut TcpStream, data_table: &mut quarrie::DataTable) {
     let mut buffer = vec![0; 128];
     let payload_size = stream.read(&mut buffer).unwrap();
@@ -39,12 +75,7 @@ fn process_command(stream: &mut TcpStream, data_table: &mut quarrie::DataTable) 
 }
 
 fn main() {
-    let mut data_table = quarrie::DataTable::new(15);
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+    let server = Server::new("127.0.0.1", "6379");
 
-    println!("listening started, ready to accept");
-
-    for stream in listener.incoming() {
-        process_command(&mut stream.unwrap(), &mut data_table);
-    }
+    server.start();
 }
