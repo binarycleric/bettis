@@ -1,57 +1,67 @@
-use std::str;
-use std::io::Write;
-use std::io::Read;
-use std::net::TcpListener;
-use std::net::TcpStream;
 use std::collections::HashMap;
 
-// TODO: Redis protocol parser.
-// https://redis.io/topics/protocol
-// TODO: Need to keep reading from the stream until the connection is closed.
-/*
-
-    For Simple Strings the first byte of the reply is "+"
-    For Errors the first byte of the reply is "-"
-    For Integers the first byte of the reply is ":"
-    For Bulk Strings the first byte of the reply is "$"
-    For Arrays the first byte of the reply is "*"
-
-
-            *2\r\n$6\r\nselect\r\n$2\r\n15\r\n
-            [ select 15 ]
-
-
-
-let command_string = str::from_utf8(&buffer).unwrap();
-let mut command_list = command_string.split("\r\n");
-
-println!("{:?}", command_list);
-
-let command_size = command_list.next().unwrap();
-println!("{:?}", command_size);
-
-*/
-
-
-
-
-#[derive(Debug, PartialEq)]
-enum RedisTypes {
-    RedisBulkString,
-    RedisSimpleString,
-    RedisArray,
+#[derive(Debug)]
+pub struct DataTable {
+    database_id: u32,
+    data_map: HashMap<String, String>,
 }
 
-#[derive(Debug)]
-struct RedisValue {
-    rtype: RedisTypes,
-    data: String, // Cause YOLO.
+impl DataTable {
+    pub fn new(database_id: u32) -> DataTable {
+        return DataTable {
+            database_id: database_id,
+            data_map: HashMap::new(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_parses_bulk_string() {
+        let request = "$6\r\nselect\r\n".to_string();
+        let redis_value =  super::DataValue::new(request);
+
+        assert_eq!("select".to_string(), redis_value.to_bulk_string());
+    }
+
+    #[test]
+    fn it_parses_simple_string() {
+        let request = "+Ok\r\n".to_string();
+        let redis_value =  super::DataValue::new(request);
+
+        assert_eq!("Ok".to_string(), redis_value.to_simple_string());
+    }
+
+    #[test]
+    fn it_parses_array() {
+        let request = "*2\r\n$6\r\nselect\r\n$2\r\n15\r\n".to_string();
+        let redis_value = super::DataValue::new(request);
+        let array = redis_value.to_array();
+
+        assert_eq!(2, array.len());
+        assert_eq!("select", array[0].to_bulk_string());
+        assert_eq!("15", array[1].to_bulk_string());
+    }
 }
 
 const REDIS_SEPARATOR: &'static str = "\r\n";
 
-impl RedisValue {
-    pub fn new(value_string: String) -> RedisValue {
+#[derive(Debug, PartialEq)]
+enum ValidTypes {
+    BulkString,
+    SimpleString,
+    Array,
+}
+
+#[derive(Debug)]
+pub struct DataValue {
+    rtype: ValidTypes,
+    data: String, // Cause YOLO.
+}
+
+impl DataValue {
+    pub fn new(value_string: String) -> DataValue {
         let type_token: char;
 
         match value_string.chars().next() {
@@ -66,20 +76,20 @@ impl RedisValue {
 
         match type_token {
             '+' => {
-                return RedisValue {
-                    rtype: RedisTypes::RedisSimpleString,
+                return DataValue {
+                    rtype: ValidTypes::SimpleString,
                     data: value_string,
                 }
             },
             '$' => {
-                return RedisValue {
-                    rtype: RedisTypes::RedisBulkString,
+                return DataValue {
+                    rtype: ValidTypes::BulkString,
                     data: value_string,
                 }
             }
             '*' => {
-                return RedisValue {
-                    rtype: RedisTypes::RedisArray,
+                return DataValue {
+                    rtype: ValidTypes::Array,
                     data: value_string,
                 }
             }
@@ -90,7 +100,7 @@ impl RedisValue {
     }
 
     // TODO: Memory usage is what?
-    pub fn to_array(&self) -> Vec<RedisValue> {
+    pub fn to_array(&self) -> Vec<DataValue> {
         let mut bundle = self.data.split(REDIS_SEPARATOR);
         let (rtype, size) = bundle.next().unwrap().split_at(1);
         let size = size.parse::<usize>().unwrap();
@@ -114,12 +124,12 @@ impl RedisValue {
                     if type_token.chars().next().unwrap() == '+' {
                         let value_string = type_token.to_string();
 
-                        redis_array.push(RedisValue::new(value_string))
+                        redis_array.push(DataValue::new(value_string))
                     } else {
                         let data = bundle.next();
                         let value_string = vec![type_token, data.unwrap()].join(REDIS_SEPARATOR);
 
-                        redis_array.push(RedisValue::new(value_string))
+                        redis_array.push(DataValue::new(value_string))
                     }
                 }
                 None => { break }
@@ -153,56 +163,26 @@ impl RedisValue {
     }
 }
 
-#[cfg(test)]
-pub mod tests {
-    #[test]
-    fn it_parses_bulk_string() {
-        let request = "$6\r\nselect\r\n".to_string();
-        let redis_value =  super::RedisValue::new(request);
-
-        assert_eq!("select".to_string(), redis_value.to_bulk_string());
-    }
-
-    #[test]
-    fn it_parses_simple_string() {
-        let request = "+Ok\r\n".to_string();
-        let redis_value =  super::RedisValue::new(request);
-
-        assert_eq!("Ok".to_string(), redis_value.to_simple_string());
-    }
-
-    #[test]
-    fn it_parses_array() {
-        let request = "*2\r\n$6\r\nselect\r\n$2\r\n15\r\n".to_string();
-        let redis_value = super::RedisValue::new(request);
-        let array = redis_value.to_array();
-
-        assert_eq!(2, array.len());
-        assert_eq!("select", array[0].to_bulk_string());
-        assert_eq!("15", array[1].to_bulk_string());
-    }
-}
-
 #[derive(Debug)]
-enum RedisAvailableCommand {
+enum AvailableCommands {
     Select,
     Set,
     Get,
 }
 
-impl RedisAvailableCommand {
+impl AvailableCommands {
     // TODO: Automate this so I don't have to copy+paste a bunch of stuff.
-    fn from_string(command: String) -> Result<RedisAvailableCommand, &'static str> {
+    fn from_string(command: String) -> Result<AvailableCommands, &'static str> {
         if command == "select" {
-            return Ok(RedisAvailableCommand::Select);
+            return Ok(AvailableCommands::Select);
         }
 
         if command == "set" {
-            return Ok(RedisAvailableCommand::Set);
+            return Ok(AvailableCommands::Set);
         }
 
         if command == "get" {
-            return Ok(RedisAvailableCommand::Get);
+            return Ok(AvailableCommands::Get);
         }
 
         return Err("Invalid redis command");
@@ -210,57 +190,42 @@ impl RedisAvailableCommand {
 }
 
 #[derive(Debug)]
-struct RedisDataTable {
-    database_id: u32,
-    data_map: HashMap<String, String>,
+pub struct Command {
+    command: AvailableCommands,
+    value: DataValue,
 }
 
-impl RedisDataTable {
-    pub fn new(database_id: u32) -> RedisDataTable {
-        return RedisDataTable {
-            database_id: database_id,
-            data_map: HashMap::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-struct RedisCommand {
-    command: RedisAvailableCommand,
-    value: RedisValue,
-}
-
-impl RedisCommand {
-    fn build(redis_value: RedisValue) -> RedisCommand {
-        if redis_value.rtype == RedisTypes::RedisArray {
+impl Command {
+    pub fn build(redis_value: DataValue) -> Command {
+        if redis_value.rtype == ValidTypes::Array {
             let command_array = redis_value.to_array();
             let command_name = command_array[0].to_bulk_string();
-            let command = RedisAvailableCommand::from_string(command_name);
-            let value: RedisValue;
+            let command = AvailableCommands::from_string(command_name);
+            let value: DataValue;
 
             match command {
                 Ok(_) => {
                     // ARGH! Only getting the first value.
                     // let value_string = &command_array[1].data;
-                    value = RedisValue::new(redis_value.data.to_string());
+                    value = DataValue::new(redis_value.data.to_string());
                 }
                 Err(msg) => {
                     panic!(msg);
                 }
             }
 
-            return RedisCommand { command: command.unwrap(), value: value }
+            return Command { command: command.unwrap(), value: value }
         }
         panic!("Improperly formed request.")
     }
 
-    fn invoke(&self, data_table: &mut RedisDataTable) -> Result<&'static str, &'static str> {
+    pub fn invoke(&self, data_table: &mut DataTable) -> Result<&'static str, &'static str> {
         match self.command {
-            RedisAvailableCommand::Select => {
+            AvailableCommands::Select => {
                 println!("Invoke select...");
                 println!("{:?}", self.value);
             }
-            RedisAvailableCommand::Set => {
+            AvailableCommands::Set => {
                 let array = self.value.to_array();
                 let key = &array[1];
                 let value = &array[2];
@@ -274,7 +239,7 @@ impl RedisCommand {
                 println!("{:?}", array);
                 println!("{:?} -- {:?}", key, value);
             }
-            RedisAvailableCommand::Get => {
+            AvailableCommands::Get => {
                 let array = self.value.to_array();
                 let key = &array[1];
                 let value = data_table.data_map.get(&key.to_bulk_string());
@@ -283,11 +248,8 @@ impl RedisCommand {
                 println!("{:?}", array);
                 println!("{:?} -- {:?}", key, value);
 
-                // TODO: Don't hard-code to simple strings.
-                return Ok("+23\r\n");
-            }
-            _ => {
-
+                // TODO: Figure out types and stuff.
+                return Ok("$2\r\n23\r\n");
             }
         }
 
@@ -295,47 +257,35 @@ impl RedisCommand {
     }
 }
 
-fn process_command(stream: &mut TcpStream, data_table: &mut RedisDataTable) {
-    let mut buffer = vec![0; 128];
-    let payload_size = stream.read(&mut buffer).unwrap();
 
-    if payload_size == 0 {
-        return;
-    }
 
-    buffer.truncate(payload_size);
-    let request_string = str::from_utf8(&buffer).unwrap().to_string();
-    println!("{:?}", request_string);
+// TODO: Redis protocol parser.
+// https://redis.io/topics/protocol
+// TODO: Need to keep reading from the stream until the connection is closed.
+/*
 
-    let redis_value = RedisValue::new(request_string);
-    match RedisCommand::build(redis_value).invoke(data_table) {
-        Ok(response) => {
-            stream.write(response.as_bytes()).unwrap();
-            // TODO: Maybe figure out how to make this an iterator instead of
-            // using recursion.
-            process_command(stream, data_table);
-        }
-        Err(_) => {
-            stream.write(":1\r\n".as_bytes()).unwrap();
-        }
-    }
+    For Simple Strings the first byte of the reply is "+"
+    For Errors the first byte of the reply is "-"
+    For Integers the first byte of the reply is ":"
+    For Bulk Strings the first byte of the reply is "$"
+    For Arrays the first byte of the reply is "*"
 
-    println!("accepted incoming connection.");
-    println!("Data table: ");
-    println!("{:?}", data_table);
-    println!("\n\n");
-}
 
-fn main() {
-    let mut data_table = RedisDataTable::new(15);
-    let listener = TcpListener::bind("127.0.0.1:6379").unwrap();
+            *2\r\n$6\r\nselect\r\n$2\r\n15\r\n
+            [ select 15 ]
 
-    println!("listening started, ready to accept");
 
-    for stream in listener.incoming() {
-        process_command(&mut stream.unwrap(), &mut data_table);
-    }
-}
+
+let command_string = str::from_utf8(&buffer).unwrap();
+let mut command_list = command_string.split("\r\n");
+
+println!("{:?}", command_list);
+
+let command_size = command_list.next().unwrap();
+println!("{:?}", command_size);
+
+*/
+
 
 /*
     match command {
@@ -378,3 +328,5 @@ fn main() {
         _ => println!("Unknown command."),
     }
 */
+
+

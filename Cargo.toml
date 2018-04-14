@@ -1,5 +1,5 @@
 [package]
-name = "rust-tcp"
+name = "quarrie"
 version = "0.1.0"
 authors = ["jon"]
 
