@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+pub mod network;
+
 #[derive(Debug)]
 pub struct DataTable {
     database_id: u32,
