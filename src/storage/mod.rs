@@ -72,6 +72,17 @@ mod tests {
     }
 
     #[test]
+    fn it_returns_set_bulk_string() {
+        let mut table = super::DataTable::new();
+        let value = super::DataType::BulkString("test bulk string".to_string());
+        let data_key = super::DataKey::new("example");
+        let expected = super::DataType::BulkString("test bulk string".to_string());
+
+        table.set(&data_key, value);
+        assert_eq!(Some(&expected), table.get(&data_key));
+    }
+
+    #[test]
     fn it_returns_set_integer() {
         let mut table = super::DataTable::new();
         let value = super::DataType::SimpleString("test");
