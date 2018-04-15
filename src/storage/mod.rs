@@ -56,6 +56,27 @@ impl<'vlife> DataTable<'vlife> {
     }
 }
 
+
+pub struct RequestParser;
+
+impl RequestParser {
+
+    // TODO: This method probably leaks memory because I still don't fully
+    //       understand lifetimes.
+    fn from_request<'a>(request: &'a str) -> DataType<'a> {
+        let mut chars = request.chars();
+
+        match chars.next().unwrap() {
+            '+' => {
+                let data: &'a str = *&chars.as_str();
+                return DataType::SimpleString(data);
+            }
+            _ => panic!("Invalid type.")
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
 
