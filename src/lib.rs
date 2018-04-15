@@ -1,21 +1,7 @@
-use std::collections::HashMap;
-
 pub mod network;
+pub mod storage;
 
-#[derive(Debug)]
-pub struct DataTable {
-    database_id: u32,
-    data_map: HashMap<String, String>,
-}
-
-impl DataTable {
-    pub fn new(database_id: u32) -> DataTable {
-        return DataTable {
-            database_id: database_id,
-            data_map: HashMap::new(),
-        }
-    }
-}
+use ::storage::DataTable;
 
 #[cfg(test)]
 mod tests {

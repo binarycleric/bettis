@@ -4,7 +4,8 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use ::{DataTable, DataValue, Command};
+use ::storage::DataTable;
+use ::{DataValue, Command};
 
 pub struct Server<'a> {
     ipaddr: &'a str,
