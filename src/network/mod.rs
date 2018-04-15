@@ -4,8 +4,8 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use ::storage::DataTable;
-use ::{DataValue, Command};
+use storage::DataTable;
+use {Command, DataValue};
 
 pub struct Server<'a> {
     ipaddr: &'a str,
@@ -17,7 +17,7 @@ impl<'a> Server<'a> {
         return Server {
             ipaddr: ipaddr,
             port: port,
-        }
+        };
     }
 
     pub fn start(&self, data_table: &mut DataTable) {
@@ -28,10 +28,8 @@ impl<'a> Server<'a> {
             Ok(listener) => {
                 println!("listening started, ready to accept");
                 self.dispatch(listener, data_table);
-            },
-            Err(err) => {
-                println!("{:?}", err)
             }
+            Err(err) => println!("{:?}", err),
         }
     }
 

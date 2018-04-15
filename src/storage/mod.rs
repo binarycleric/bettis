@@ -13,14 +13,14 @@ pub struct DataKey<'a> {
 }
 
 impl<'a> Clone for DataKey<'a> {
-    fn clone(&self) -> DataKey<'a> { *self }
+    fn clone(&self) -> DataKey<'a> {
+        *self
+    }
 }
 
 impl<'a> DataKey<'a> {
     pub fn new(key: &'a str) -> DataKey {
-      return DataKey {
-          key: key,
-      }
+        return DataKey { key: key };
     }
 }
 
@@ -31,7 +31,6 @@ impl<'a> PartialEq for DataKey<'a> {
 }
 
 impl<'a> Eq for DataKey<'a> {}
-
 
 #[derive(Debug)]
 pub struct DataTable<'vlife> {
@@ -45,7 +44,7 @@ impl<'vlife> DataTable<'vlife> {
         return DataTable {
             data_map: HashMap::new(),
             value_map: HashMap::new(),
-        }
+        };
     }
 
     pub fn set(&mut self, key: &DataKey<'vlife>, value: DataType<'vlife>) {

@@ -1,14 +1,14 @@
 pub mod network;
 pub mod storage;
 
-use ::storage::DataTable;
+use storage::DataTable;
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn it_parses_bulk_string() {
         let request = "$6\r\nselect\r\n".to_string();
-        let redis_value =  super::DataValue::new(request);
+        let redis_value = super::DataValue::new(request);
 
         assert_eq!("select".to_string(), redis_value.to_bulk_string());
     }
@@ -16,7 +16,7 @@ mod tests {
     #[test]
     fn it_parses_simple_string() {
         let request = "+Ok\r\n".to_string();
-        let redis_value =  super::DataValue::new(request);
+        let redis_value = super::DataValue::new(request);
 
         assert_eq!("Ok".to_string(), redis_value.to_simple_string());
     }
@@ -53,9 +53,7 @@ impl DataValue {
         let type_token: char;
 
         match value_string.chars().next() {
-            Some(value) => {
-                type_token = value
-            }
+            Some(value) => type_token = value,
             None => {
                 println!("invalid: {:?}", value_string);
                 panic!("Invalid redis value.");
@@ -68,7 +66,7 @@ impl DataValue {
                     rtype: ValidTypes::SimpleString,
                     data: value_string,
                 }
-            },
+            }
             '$' => {
                 return DataValue {
                     rtype: ValidTypes::BulkString,
@@ -81,9 +79,7 @@ impl DataValue {
                     data: value_string,
                 }
             }
-            _ => {
-                panic!("Invalid type.")
-            }
+            _ => panic!("Invalid type."),
         }
     }
 
@@ -120,7 +116,7 @@ impl DataValue {
                         redis_array.push(DataValue::new(value_string))
                     }
                 }
-                None => { break }
+                None => break,
             }
         }
 
@@ -202,7 +198,10 @@ impl Command {
                 }
             }
 
-            return Command { command: command.unwrap(), value: value }
+            return Command {
+                command: command.unwrap(),
+                value: value,
+            };
         }
         panic!("Improperly formed request.")
     }
@@ -220,7 +219,7 @@ impl Command {
 
                 data_table.data_map.insert(
                     key.to_bulk_string().to_string(),
-                    value.to_bulk_string().to_string()
+                    value.to_bulk_string().to_string(),
                 );
 
                 println!("Invoke set...");
@@ -244,8 +243,6 @@ impl Command {
         return Ok("+OK\r\n");
     }
 }
-
-
 
 // TODO: Redis protocol parser.
 // https://redis.io/topics/protocol
@@ -273,7 +270,6 @@ let command_size = command_list.next().unwrap();
 println!("{:?}", command_size);
 
 */
-
 
 /*
     match command {
@@ -316,5 +312,3 @@ println!("{:?}", command_size);
         _ => println!("Unknown command."),
     }
 */
-
-
