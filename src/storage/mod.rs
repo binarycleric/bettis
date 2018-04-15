@@ -7,9 +7,13 @@ pub enum DataType<'a> {
     Integer(i64),
 }
 
-#[derive(Debug, Hash)]
+#[derive(Debug, Hash, Copy)]
 pub struct DataKey<'a> {
     key: &'a str,
+}
+
+impl<'a> Clone for DataKey<'a> {
+    fn clone(&self) -> DataKey<'a> { *self }
 }
 
 impl<'a> DataKey<'a> {
@@ -29,8 +33,6 @@ impl<'a> PartialEq for DataKey<'a> {
 impl<'a> Eq for DataKey<'a> {}
 
 
-
-
 #[derive(Debug)]
 pub struct DataTable<'vlife> {
     pub data_map: HashMap<String, String>,
@@ -46,11 +48,11 @@ impl<'vlife> DataTable<'vlife> {
         }
     }
 
-    pub fn set(&mut self, key: DataKey<'vlife>, value: DataType<'vlife>) {
-        self.value_map.insert(key, value);
+    pub fn set(&mut self, key: &DataKey<'vlife>, value: DataType<'vlife>) {
+        self.value_map.insert(*key, value);
     }
 
-    pub fn get(&self, key: DataKey<'vlife>) -> Option<&DataType<'vlife>> {
+    pub fn get(&self, key: &DataKey<'vlife>) -> Option<&DataType<'vlife>> {
         return self.value_map.get(&key);
     }
 }
@@ -63,13 +65,10 @@ mod tests {
         let mut table = super::DataTable::new();
         let value = super::DataType::Integer(42);
         let data_key = super::DataKey::new("example");
-
-        table.set(data_key, value);
-
-        let data_key = super::DataKey::new("example");
         let expected = super::DataType::Integer(42);
 
-        assert_eq!(Some(&expected), table.get(data_key));
+        table.set(&data_key, value);
+        assert_eq!(Some(&expected), table.get(&data_key));
     }
 
     #[test]
@@ -77,13 +76,10 @@ mod tests {
         let mut table = super::DataTable::new();
         let value = super::DataType::SimpleString("test");
         let data_key = super::DataKey::new("example");
-
-        table.set(data_key, value);
-
-        let data_key = super::DataKey::new("example");
         let expected = super::DataType::SimpleString("test");
 
-        assert_eq!(Some(&expected), table.get(data_key));
+        table.set(&data_key, value);
+        assert_eq!(Some(&expected), table.get(&data_key));
     }
 
     #[test]
@@ -91,6 +87,6 @@ mod tests {
         let mut table = super::DataTable::new();
         let data_key = super::DataKey::new("example");
 
-        assert_eq!(None, table.get(data_key));
+        assert_eq!(None, table.get(&data_key));
     }
 }
