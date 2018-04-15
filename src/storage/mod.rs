@@ -68,7 +68,9 @@ impl RequestParser {
 
         match chars.next().unwrap() {
             '+' => {
-                let data: &'a str = *&chars.as_str();
+                let mut bundle = chars.as_str().split("\r\n");
+                let data: &'a str = bundle.next().unwrap();
+
                 return DataType::SimpleString(data);
             }
             _ => panic!("Invalid type.")
@@ -79,6 +81,15 @@ impl RequestParser {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn it_returns_simple_string_from_request() {
+        let request = "+Ok\r\n";
+        let simple_string = super::RequestParser::from_request(request);
+        let expected = super::DataType::SimpleString("Ok");
+
+        assert_eq!(expected, simple_string);
+    }
 
     #[test]
     fn it_sets_and_gets_values() {
