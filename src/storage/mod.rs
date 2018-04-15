@@ -68,7 +68,7 @@ impl RequestParser {
 
         match chars.next().unwrap() {
             '+' => {
-                let mut bundle = chars.as_str().split("\r\n");
+                let mut bundle = chars.as_str().split(super::REDIS_SEPARATOR);
                 let data: &'a str = bundle.next().unwrap();
 
                 return DataType::SimpleString(data);
@@ -77,7 +77,6 @@ impl RequestParser {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
