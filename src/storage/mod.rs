@@ -8,25 +8,25 @@ pub enum DataType<'a> {
 }
 
 #[derive(Debug, Hash)]
-pub struct DataKey {
-    key: String,
+pub struct DataKey<'a> {
+    key: &'a str,
 }
 
-impl DataKey {
-    pub fn new<'a>(key: &'a str) -> DataKey {
+impl<'a> DataKey<'a> {
+    pub fn new(key: &'a str) -> DataKey {
       return DataKey {
-          key: key.to_string(),
+          key: key,
       }
     }
 }
 
-impl PartialEq for DataKey {
+impl<'a> PartialEq for DataKey<'a> {
     fn eq(&self, other: &DataKey) -> bool {
         self.key == other.key
     }
 }
 
-impl Eq for DataKey {}
+impl<'a> Eq for DataKey<'a> {}
 
 
 
@@ -35,7 +35,7 @@ impl Eq for DataKey {}
 pub struct DataTable<'vlife> {
     pub data_map: HashMap<String, String>,
 
-    value_map: HashMap<DataKey, DataType<'vlife>>,
+    value_map: HashMap<DataKey<'vlife>, DataType<'vlife>>,
 }
 
 impl<'vlife> DataTable<'vlife> {
@@ -46,11 +46,11 @@ impl<'vlife> DataTable<'vlife> {
         }
     }
 
-    pub fn set(&mut self, key: DataKey, value: DataType<'vlife>) {
+    pub fn set(&mut self, key: DataKey<'vlife>, value: DataType<'vlife>) {
         self.value_map.insert(key, value);
     }
 
-    pub fn get(&self, key: DataKey) -> Option<&DataType<'vlife>> {
+    pub fn get(&self, key: DataKey<'vlife>) -> Option<&DataType<'vlife>> {
         return self.value_map.get(&key);
     }
 }
@@ -60,6 +60,20 @@ mod tests {
 
     #[test]
     fn it_sets_and_gets_values() {
+        let mut table = super::DataTable::new();
+        let value = super::DataType::Integer(42);
+        let data_key = super::DataKey::new("example");
+
+        table.set(data_key, value);
+
+        let data_key = super::DataKey::new("example");
+        let expected = super::DataType::Integer(42);
+
+        assert_eq!(Some(&expected), table.get(data_key));
+    }
+
+    #[test]
+    fn it_returns_set_integer() {
         let mut table = super::DataTable::new();
         let value = super::DataType::SimpleString("test");
         let data_key = super::DataKey::new("example");
