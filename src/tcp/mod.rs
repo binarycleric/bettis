@@ -5,7 +5,7 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 
 use storage::DataTable;
-use parser::RequestParser;
+use parser::Parser;
 use commands::Command;
 
 pub struct Server<'a> {
@@ -52,7 +52,7 @@ impl<'a> Server<'a> {
         buffer.truncate(payload_size);
 
         let request_string = str::from_utf8(&buffer).unwrap().to_string();
-        let redis_value = RequestParser::from_str(&request_string).unwrap();
+        let redis_value = Parser::new(&request_string).to_data_type().unwrap();
 
         println!("{:?}", request_string);
 
