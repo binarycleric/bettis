@@ -4,8 +4,8 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use storage::DataTable;
-use {Command, DataValue};
+use storage::{DataTable, RequestParser};
+use commands::Command;
 
 pub struct Server<'a> {
     ipaddr: &'a str,
@@ -52,7 +52,8 @@ impl<'a> Server<'a> {
         let request_string = str::from_utf8(&buffer).unwrap().to_string();
         println!("{:?}", request_string);
 
-        let redis_value = DataValue::new(request_string);
+        let redis_value = RequestParser::from_str(&request_string).unwrap();
+
         match Command::build(redis_value).invoke(data_table) {
             Ok(response) => {
                 stream.write(response.as_bytes()).unwrap();

@@ -125,7 +125,7 @@ impl<'a> Iterator for ArrayParser<'a> {
              Ok(value) => {
                  return Some(value)
              }
-             Err(error) => {
+             Err(_) => {
                  return None
              }
          }
@@ -154,7 +154,7 @@ impl RequestParser {
 
     // TODO: This method probably leaks memory because I still don't fully
     //       understand lifetimes.
-    fn from_str<'a>(request: &'a str) -> Result<DataType<'a>, &'static str> {
+    pub fn from_str<'a>(request: &'a str) -> Result<DataType<'a>, &'static str> {
         let rtype: char = RequestParser::get_type(request);
 
         match rtype {
@@ -193,7 +193,7 @@ impl RequestParser {
 mod tests {
 
     #[test]
-    fn it_parses_array() {
+    fn it_parses_array_with_simple_string() {
         let request = "*1\r\n+Ok\r\n";
         let size = 1;
         let mut parser = super::ArrayParser::new(size, request);
