@@ -1,15 +1,15 @@
 use storage::{DataType, DataTable};
 
+const SELECT_COMMAND: &'static str = "select";
+const SET_COMMAND: &'static str = "set";
+const GET_COMMAND: &'static str = "get";
+
 #[derive(Debug)]
 enum Available {
     Select,
     Set,
     Get,
 }
-
-const SELECT_COMMAND: &'static str = "select";
-const SET_COMMAND: &'static str = "set";
-const GET_COMMAND: &'static str = "get";
 
 impl Available {
     fn from_str<'a>(command: &'a str) -> Result<Available, &'static str> {
