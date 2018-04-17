@@ -7,22 +7,19 @@ enum Available {
     Get,
 }
 
+const SELECT_COMMAND: &'static str = "select";
+const SET_COMMAND: &'static str = "set";
+const GET_COMMAND: &'static str = "get";
+
 impl Available {
     // TODO: Automate this so I don't have to copy+paste a bunch of stuff.
-    fn from_string(command: String) -> Result<Available, &'static str> {
-        if command == "select" {
-            return Ok(Available::Select);
+    fn from_string<'a>(command: &'a str) -> Result<Available, &'static str> {
+        match command {
+            SELECT_COMMAND => Ok(Available::Select),
+            SET_COMMAND => Ok(Available::Set),
+            GET_COMMAND => Ok(Available::Get),
+            _ => Err("Invalid redis command"),
         }
-
-        if command == "set" {
-            return Ok(Available::Set);
-        }
-
-        if command == "get" {
-            return Ok(Available::Get);
-        }
-
-        return Err("Invalid redis command");
     }
 }
 
@@ -40,7 +37,7 @@ impl<'a> Command<'a> {
         match redis_value {
             DataType::Array(array) => {
                 if let DataType::BulkString(ref command_name) = array[0] {
-                    let command = Available::from_string(command_name.to_string());
+                    let command = Available::from_string(command_name);
 
                     if let DataType::BulkString(ref value) = array[1] {
                         return Command {
