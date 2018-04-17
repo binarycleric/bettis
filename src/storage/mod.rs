@@ -1,17 +1,15 @@
 use std::collections::HashMap;
 
+const BULK_STRING_TOKEN: char = '$';
+const SIMPLE_STRING_TOKEN: char = '+';
+const ARRAY_TOKEN: char = '*';
+
 #[derive(Debug, PartialEq)]
 pub enum DataType<'a> {
     SimpleString(&'a str),
     BulkString(String),
     Integer(i64),
     Array(Vec<DataType<'a>>),
-}
-
-impl<'a> DataType<'a> {
-    fn build_bulk_string<'b>(size: usize, string: &'b str) -> DataType {
-        return DataType::BulkString(string.to_string());
-    }
 }
 
 #[derive(Debug, Hash, Copy)]
@@ -66,10 +64,6 @@ impl<'vlife> DataTable<'vlife> {
 
 pub struct RequestParser;
 
-struct BulkStringParser {
-    parsed: String,
-}
-
 struct ArrayParser<'a> {
     incoming: &'a str,
     current_idx: usize,
@@ -94,11 +88,11 @@ impl<'a> ArrayParser<'a> {
         let rtype: char = RequestParser::get_type(request);
 
         match rtype {
-            '+' => {
+            SIMPLE_STRING_TOKEN => {
                 let value_idx: usize = request.find(super::REDIS_SEPARATOR).unwrap_or(0);
                 return value_idx;
             }
-            '$' => {
+            BULK_STRING_TOKEN => {
                 let size: usize = RequestParser::get_size(request).unwrap();
 
                 return size + super::REDIS_SEPARATOR.len()
@@ -164,20 +158,20 @@ impl RequestParser {
         let rtype: char = RequestParser::get_type(request);
 
         match rtype {
-            '+' => {
+            SIMPLE_STRING_TOKEN => {
                 let value_idx = request.get(1..).unwrap().find(super::REDIS_SEPARATOR).unwrap();
                 let value = request.get(1..(value_idx + 1)).unwrap();
 
                 return Ok(DataType::SimpleString(value))
             }
-            '$' => {
+            BULK_STRING_TOKEN => {
                 let size: usize = RequestParser::get_size(request).unwrap();
                 let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
                 let value = request.get(start_idx..(start_idx + size)).unwrap();
 
-                return Ok(DataType::build_bulk_string(size, value))
+                return Ok(DataType::BulkString(value.to_string()));
             }
-            '*' => {
+            ARRAY_TOKEN => {
                 let size: usize = RequestParser::get_size(request).unwrap();
                 let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
                 let mut array_values = ArrayParser::new(size, request);
@@ -197,6 +191,17 @@ impl RequestParser {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn it_parses_array() {
+        let request = "*1\r\n+Ok\r\n";
+        let size = 1;
+        let mut parser = super::ArrayParser::new(size, request);
+        let expected = super::DataType::SimpleString("Ok");
+
+        assert_eq!(Some(expected), parser.next());
+        assert_eq!(None, parser.next());
+    }
 
     #[test]
     fn it_returns_simple_string_from_request() {
