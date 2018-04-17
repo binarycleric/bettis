@@ -12,8 +12,7 @@ const SET_COMMAND: &'static str = "set";
 const GET_COMMAND: &'static str = "get";
 
 impl Available {
-    // TODO: Automate this so I don't have to copy+paste a bunch of stuff.
-    fn from_string<'a>(command: &'a str) -> Result<Available, &'static str> {
+    fn from_str<'a>(command: &'a str) -> Result<Available, &'static str> {
         match command {
             SELECT_COMMAND => Ok(Available::Select),
             SET_COMMAND => Ok(Available::Set),
@@ -37,7 +36,7 @@ impl<'a> Command<'a> {
         match redis_value {
             DataType::Array(array) => {
                 if let DataType::BulkString(ref command_name) = array[0] {
-                    let command = Available::from_string(command_name);
+                    let command = Available::from_str(command_name);
 
                     if let DataType::BulkString(ref value) = array[1] {
                         return Command {
@@ -58,45 +57,26 @@ impl<'a> Command<'a> {
     }
 
     pub fn invoke(&self, data_table: &mut DataTable) -> Result<&'static str, &'static str> {
-
-        println!("{:?}", self.command);
-        return Ok("+OK\r\n");
-
-/*
         match self.command {
-            AvailableCommands::Select => {
+            Available::Select => {
                 println!("Invoke select...");
-                println!("{:?}", self.value);
+                println!("--> {:?}", self.value);
+
+                Ok("+OK\r\n")
             }
-            AvailableCommands::Set => {
-                let array = self.value.to_array();
-                let key = &array[1];
-                let value = &array[2];
-
-                data_table.data_map.insert(
-                    key.to_bulk_string().to_string(),
-                    value.to_bulk_string().to_string(),
-                );
-
+            Available::Set => {
                 println!("Invoke set...");
-                println!("{:?}", array);
-                println!("{:?} -- {:?}", key, value);
-            }
-            AvailableCommands::Get => {
-                let array = self.value.to_array();
-                let key = &array[1];
-                let value = data_table.data_map.get(&key.to_bulk_string());
+                println!("--> {:?}", self.value);
 
+                Ok("+OK\r\n")
+            }
+            Available::Get => {
                 println!("Invoke get ...");
-                println!("{:?}", array);
-                println!("{:?} -- {:?}", key, value);
+                println!("--> {:?}", self.value);
 
                 // TODO: Figure out types and stuff.
-                return Ok("$2\r\n23\r\n");
+                Ok("$2\r\n23\r\n")
             }
         }
-
-        return Ok("+OK\r\n");
-*/
     }
 }
