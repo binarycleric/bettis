@@ -1,6 +1,6 @@
 extern crate quarrie;
 
-use quarrie::network::Server;
+use quarrie::tcp::Server;
 use quarrie::storage::DataTable;
 
 fn main() {
