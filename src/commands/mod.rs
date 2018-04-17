@@ -1,4 +1,5 @@
-use storage::{DataType, DataTable};
+use storage::DataTable;
+use types::DataType;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -31,7 +32,6 @@ pub struct Command<'a> {
 #[cfg(test)]
 mod tests {
     use super::Available;
-
 
     #[test]
     fn it_parses_command_from_string() {

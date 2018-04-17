@@ -1,6 +1,8 @@
 pub mod tcp;
 pub mod storage;
 pub mod commands;
+pub mod parser;
+pub mod types;
 
 const REDIS_SEPARATOR: &'static str = "\r\n";
 
