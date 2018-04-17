@@ -71,18 +71,42 @@ struct BulkStringParser {
 }
 
 struct ArrayParser<'a> {
-    incoming: Vec<&'a str>,
-    index: usize,
+    incoming: &'a str,
+    current_idx: usize,
 }
 
 impl<'a> ArrayParser<'a> {
-    fn new(raw_array_data: &'a str) -> ArrayParser<'a> {
+    fn new(size: usize, raw_array_data: &'a str) -> ArrayParser<'a> {
+        let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
+        let raw_array_contents = raw_array_data.get(start_idx..).unwrap();
+
         let parser = ArrayParser {
-            incoming: Vec::new(),
-            index: 0,
+            incoming: raw_array_contents,
+            current_idx: 0,
         };
 
         return parser;
+    }
+
+    // TODO: This maybe doesn't belong here.
+    // TODO: Support for tested arrays.
+    fn size_of_type_string(&self, request: &'a str) -> usize {
+        let rtype: char = RequestParser::get_type(request);
+
+        match rtype {
+            '+' => {
+                let value_idx: usize = request.find(super::REDIS_SEPARATOR).unwrap_or(0);
+                return value_idx;
+            }
+            '$' => {
+                let size: usize = RequestParser::get_size(request).unwrap();
+
+                return size + super::REDIS_SEPARATOR.len()
+            }
+            _ => {
+                return 0;
+            }
+        }
     }
 }
 
@@ -90,25 +114,31 @@ impl<'a> Iterator for ArrayParser<'a> {
     type Item = DataType<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = self.incoming[self.index];
-        self.index = self.index + 1;
-
-        if item.chars().next().unwrap() == '$' {
-            let (_, size) = item.split_at(1);
-            let size = size.parse::<usize>().unwrap();
-            let item2 = self.incoming[self.index];
-            let data_type = DataType::build_bulk_string(size, item2);
-            self.index = self.index + 1;
-
-            return Some(data_type);
+        if self.current_idx >= self.incoming.len() {
+            return None
         }
 
-        return Some(RequestParser::from_str(item).unwrap());
+        let type_str_len: usize = self.size_of_type_string(self.incoming);
+        let raw_type_data = self.incoming.get(self.current_idx..type_str_len).unwrap();
+
+        println!("-> {:?}", self.incoming);
+        println!("-> {:?}", type_str_len);
+        println!("--> {:?}", raw_type_data);
+
+        self.current_idx = self.current_idx + type_str_len + super::REDIS_SEPARATOR.len();
+
+         match RequestParser::from_str(self.incoming) {
+             Ok(value) => {
+                 return Some(value)
+             }
+             Err(error) => {
+                 return None
+             }
+         }
     }
 }
 
 impl RequestParser {
-
     fn get_type<'a>(request: &'a str) -> char {
         let rtype: char = request.get(0..1).unwrap().parse().unwrap();
         return rtype;
@@ -142,20 +172,19 @@ impl RequestParser {
             }
             '$' => {
                 let size: usize = RequestParser::get_size(request).unwrap();
-                println!("{:?} -- {:?}", rtype, size);
-
                 let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
                 let value = request.get(start_idx..(start_idx + size)).unwrap();
-
-                println!("-> {:?}", request);
-                println!("--> {:?} -- {:?}", size, start_idx);
-                println!("--> bulk string: {:?}", value);
 
                 return Ok(DataType::build_bulk_string(size, value))
             }
             '*' => {
                 let size: usize = RequestParser::get_size(request).unwrap();
                 let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
+                let mut array_values = ArrayParser::new(size, request);
+
+                for row in array_values {
+                    array.push(row);
+                }
 
                 return Ok(DataType::Array(array))
             }
