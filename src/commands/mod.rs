@@ -4,7 +4,7 @@ const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
 const GET_COMMAND: &'static str = "get";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Available {
     Select,
     Set,
@@ -26,6 +26,19 @@ impl Available {
 pub struct Command<'a> {
     command: Available,
     value: DataType<'a>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Available;
+
+
+    #[test]
+    fn it_parses_command_from_string() {
+      assert_eq!(Ok(Available::Select), Available::from_str("select"));
+      assert_eq!(Ok(Available::Set), Available::from_str("set"));
+      assert_eq!(Ok(Available::Get), Available::from_str("get"));
+    }
 }
 
 impl<'a> Command<'a> {

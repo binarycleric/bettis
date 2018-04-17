@@ -49,10 +49,11 @@ impl<'a> Server<'a> {
         }
 
         buffer.truncate(payload_size);
-        let request_string = str::from_utf8(&buffer).unwrap().to_string();
-        println!("{:?}", request_string);
 
+        let request_string = str::from_utf8(&buffer).unwrap().to_string();
         let redis_value = RequestParser::from_str(&request_string).unwrap();
+
+        println!("{:?}", request_string);
 
         match Command::build(redis_value).invoke(data_table) {
             Ok(response) => {
