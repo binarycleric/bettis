@@ -4,70 +4,95 @@ const BULK_STRING_TOKEN: char = '$';
 const SIMPLE_STRING_TOKEN: char = '+';
 const ARRAY_TOKEN: char = '*';
 
+#[derive(Debug)]
 struct ArrayParser<'a> {
-    incoming: &'a str,
+    array_data: &'a str,
+    size: usize,
     current_idx: usize,
 }
 
 impl<'a> ArrayParser<'a> {
-    fn new(size: usize, raw_array_data: &'a str) -> ArrayParser<'a> {
-        let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
-        let raw_array_contents = raw_array_data.get(start_idx..).unwrap();
+    fn new(array_data: &'a str) -> Result<ArrayParser<'a>, &'static str> {
+        println!("New ArrayParser");
+        println!("\n\n");
 
-        let parser = ArrayParser {
-            incoming: raw_array_contents,
-            current_idx: 0,
-        };
+        let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
+        // TODO: Check for correct rtype;
+        let array_size: usize;
+        let values_idx: usize;
 
-        return parser;
+        match array_data.find(super::REDIS_SEPARATOR) {
+            Some(idx) => {
+                array_size = array_data.get(1..idx).unwrap().parse().unwrap();
+                values_idx = 1 + array_size.to_string().len() + super::REDIS_SEPARATOR.len();
+
+                println!("array_size --> {:?}", array_size);
+                println!("values_idx --> {:?}", values_idx);
+
+                Ok(ArrayParser {
+                    array_data: array_data,
+                    size: array_size,
+                    current_idx: values_idx,
+                })
+            }
+            None => {
+                Err("malformed string or something")
+            }
+        }
     }
 
-    // TODO: This maybe doesn't belong here.
-    // TODO: Support for tested arrays.
-    fn size_of_type_string(&self, request: &'a str) -> usize {
-        let data_type = Parser::new(request);
+    pub fn start_of_values_idx(&self) -> usize {
+        return self.current_idx;
+    }
 
-        match data_type.get_type() {
-            SIMPLE_STRING_TOKEN => {
-                let value_idx: usize = request.find(super::REDIS_SEPARATOR).unwrap_or(0);
-                return value_idx;
+    fn get_current_value_string(&self) -> Option<&'a str> {
+        return self.array_data.get(self.current_idx..);
+    }
+
+    fn get_current_type(&self) -> char {
+        return self.get_current_value_string().unwrap().get(..1).unwrap().parse::<char>().unwrap();
+    }
+
+    fn next_type_value(&self) -> (&'a str, usize) {
+        match self.get_current_value_string() {
+            Some(value) => {
+                let rtype = self.get_current_type();
+
+                match rtype {
+                    SIMPLE_STRING_TOKEN => {
+                        let end_of_value_idx = value.find(super::REDIS_SEPARATOR).unwrap() + self.current_idx + super::REDIS_SEPARATOR.len();
+
+                        return (value, end_of_value_idx);
+                    }
+                    _ => {
+                        panic!("Fail to parse type: {:?}", rtype)
+                    }
+                }
             }
-            BULK_STRING_TOKEN => {
-                let size: usize = data_type.get_size().unwrap();
-                return size + super::REDIS_SEPARATOR.len()
-            }
-            _ => {
-                return 0;
+            None => {
+                panic!("Fail to get next value")
             }
         }
     }
 }
 
 impl<'a> Iterator for ArrayParser<'a> {
-    type Item = DataType<'a>;
+    type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.current_idx >= self.incoming.len() {
+        println!("Start of ArrayParser.next");
+
+        if self.array_data.len() == self.current_idx {
             return None
         }
 
-        let type_str_len: usize = self.size_of_type_string(self.incoming);
-        let raw_type_data = self.incoming.get(self.current_idx..type_str_len).unwrap();
+        let (type_value, next_value_idx) = self.next_type_value();
 
-        println!("-> {:?}", self.incoming);
-        println!("type_str_len -> {:?}", type_str_len);
-        println!("raw_type_data --> {:?}", raw_type_data);
+        println!("new_current_idx (Next) --> {:?}", next_value_idx);
+        println!("raw_data_length (Next) --> {:?}", self.array_data.len());
 
-        self.current_idx = self.current_idx + type_str_len + super::REDIS_SEPARATOR.len();
-
-         match Parser::new(raw_type_data).to_data_type() {
-             Ok(value) => {
-                 return Some(value)
-             }
-             Err(_) => {
-                 return None
-             }
-         }
+        self.current_idx = next_value_idx;
+        return Some(type_value);
     }
 }
 
@@ -99,26 +124,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // TODO: How much of the string is left over after the type is parsed.
-    // Could be useful for building the iterator.
-
-    pub fn get_reminder(&self) -> String {
-        return "TEST".to_string();
-    }
-
-    pub fn get_reminder_size(&self) -> usize {
-        return 0;
-    }
-
     // TODO: This method probably leaks memory because I still don't fully
     //       understand lifetimes.
     pub fn to_data_type(&self) -> Result<DataType<'a>, &'static str> {
         match self.get_type() {
             SIMPLE_STRING_TOKEN => {
-                println!("Incoming get: ---> {:?}", self.incoming.get(1..));
-                println!("Incoming len: ---> {:?}", self.incoming.get(1..).unwrap().find(super::REDIS_SEPARATOR));
-
                 let value_idx: usize;
+
                 match self.incoming.get(1..).unwrap().find(super::REDIS_SEPARATOR) {
                     Some(idx) => { value_idx = (idx + 1) }
                     None => { value_idx = self.incoming.len() }
@@ -136,6 +148,12 @@ impl<'a> Parser<'a> {
             BULK_STRING_TOKEN => {
                 let size: usize = self.get_size().unwrap();
                 let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
+
+                println!("size --> : {:?}", self.get_size().unwrap().to_string().len());
+                println!("size_idx --> : {:?}", start_idx);
+                println!("incoming --> {:?}", self.incoming);
+
+
                 let value = self.incoming.get(start_idx..(start_idx + size)).unwrap();
 
                 return Ok(DataType::BulkString(value.to_string()));
@@ -143,11 +161,11 @@ impl<'a> Parser<'a> {
             ARRAY_TOKEN => {
                 let size: usize = self.get_size().unwrap();
                 let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
-                let mut array_values = ArrayParser::new(size, self.incoming);
+                let mut array_values = ArrayParser::new(self.incoming);
 
-                for row in array_values {
-                    array.push(row);
-                }
+//                for row in array_values {
+//                    array.push(row);
+//                }
 
                 return Ok(DataType::Array(array))
             }
@@ -158,10 +176,27 @@ impl<'a> Parser<'a> {
     }
 }
 
+
+
 #[cfg(test)]
 mod tests {
     use super::ArrayParser;
 
+    #[test]
+    fn it_builds_new_array_parser() {
+        let request = "*1\r\n+Ok\r\n";
+        let mut array_parser = ArrayParser::new(request).unwrap();
+        println!("array_parser --> {:?}", array_parser);
+        println!("start_of_values --> {:?}", array_parser.start_of_values_idx());
+        println!("next_value --> {:?}", array_parser.next());
+        println!("none_next_value --> {:?}", array_parser.next());
+
+
+        assert_eq!(true, false);
+    }
+
+
+/*
     #[test]
     fn it_returns_simple_string_from_request() {
         let request = "+Ok\r\n";
@@ -182,6 +217,16 @@ mod tests {
     }
 
     #[test]
+    fn it_parses_array_with_bulk_string() {
+        let request = "*1\r\n$2\r\nOk\r\n";
+        let mut parser = ArrayParser::new(1, request);
+        let expected = super::DataType::BulkString("Ok".to_string());
+
+        assert_eq!(Some(expected), parser.next());
+        assert_eq!(None, parser.next());
+    }
+
+    #[test]
     fn it_returns_array_from_request() {
         let request = "*1\r\n+Ok\r\n";
         let array = super::Parser::new(request).to_data_type();
@@ -190,6 +235,7 @@ mod tests {
 
         assert_eq!(Ok(expected), array);
     }
+*/
 
     #[test]
     fn it_returns_bulk_string_from_request() {
