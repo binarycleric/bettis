@@ -135,7 +135,7 @@ impl<'a> Parser<'a> {
                 let value_idx: usize;
 
                 match self.incoming.get(1..).unwrap().find(super::REDIS_SEPARATOR) {
-                    Some(idx) => value_idx = (idx + 1),
+                    Some(idx) => value_idx = idx + 1,
                     None => value_idx = self.incoming.len(),
                 }
 
