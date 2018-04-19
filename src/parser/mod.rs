@@ -45,12 +45,23 @@ impl<'a> ArrayParser<'a> {
         return self.current_idx;
     }
 
+    pub fn value_seperator_len(&self) -> usize {
+        return super::REDIS_SEPARATOR.len();
+    }
+
     fn get_current_value_string(&self) -> Option<&'a str> {
         return self.array_data.get(self.current_idx..);
     }
 
     fn get_current_type(&self) -> char {
-        return self.get_current_value_string().unwrap().get(..1).unwrap().parse::<char>().unwrap();
+        match self.get_current_value_string() {
+            Some(value) => {
+                value.get(..1).unwrap().parse::<char>().unwrap()
+            }
+            None => {
+                panic!("I haven't figured the out yet");
+            }
+        }
     }
 
     fn next_type_value(&self) -> (&'a str, usize) {
@@ -60,9 +71,16 @@ impl<'a> ArrayParser<'a> {
 
                 match rtype {
                     SIMPLE_STRING_TOKEN => {
-                        let end_of_value_idx = value.find(super::REDIS_SEPARATOR).unwrap() + self.current_idx + super::REDIS_SEPARATOR.len();
 
-                        return (value, end_of_value_idx);
+                        println!("simple_string_value --> {:?}", value);
+
+                        let end_of_value_idx = value.find(super::REDIS_SEPARATOR).unwrap() + self.value_seperator_len();
+                        let current_value = value.get(..end_of_value_idx).unwrap();
+
+                        println!("current_value --> {:?}", current_value);
+
+
+                        return (current_value, end_of_value_idx);
                     }
                     _ => {
                         panic!("Fail to parse type: {:?}", rtype)
@@ -91,7 +109,7 @@ impl<'a> Iterator for ArrayParser<'a> {
         println!("new_current_idx (Next) --> {:?}", next_value_idx);
         println!("raw_data_length (Next) --> {:?}", self.array_data.len());
 
-        self.current_idx = next_value_idx;
+        self.current_idx += next_value_idx;
         return Some(type_value);
     }
 }
@@ -186,13 +204,19 @@ mod tests {
     fn it_builds_new_array_parser() {
         let request = "*1\r\n+Ok\r\n";
         let mut array_parser = ArrayParser::new(request).unwrap();
-        println!("array_parser --> {:?}", array_parser);
-        println!("start_of_values --> {:?}", array_parser.start_of_values_idx());
-        println!("next_value --> {:?}", array_parser.next());
-        println!("none_next_value --> {:?}", array_parser.next());
 
+        assert_eq!(Some("+Ok\r\n"), array_parser.next());
+        assert_eq!(None, array_parser.next());
+    }
 
-        assert_eq!(true, false);
+    #[test]
+    fn array_parser_handles_two_simple_strings() {
+        let request = "*1\r\n+Ok\r\n+Ok\r\n";
+        let mut array_parser = ArrayParser::new(request).unwrap();
+
+        assert_eq!(Some("+Ok\r\n"), array_parser.next());
+        assert_eq!(Some("+Ok\r\n"), array_parser.next());
+        assert_eq!(None, array_parser.next());
     }
 
 
