@@ -35,14 +35,13 @@ mod tests {
 
     #[test]
     fn it_parses_command_from_string() {
-      assert_eq!(Ok(Available::Select), Available::from_str("select"));
-      assert_eq!(Ok(Available::Set), Available::from_str("set"));
-      assert_eq!(Ok(Available::Get), Available::from_str("get"));
+        assert_eq!(Ok(Available::Select), Available::from_str("select"));
+        assert_eq!(Ok(Available::Set), Available::from_str("set"));
+        assert_eq!(Ok(Available::Get), Available::from_str("get"));
     }
 }
 
 impl<'a> Command<'a> {
-
     // TODO: This method is a total mess and I don't trust it at all.
     // Needs a pretty serious refactor.
     pub fn build(redis_value: DataType<'a>) -> Command {
@@ -55,7 +54,7 @@ impl<'a> Command<'a> {
                         return Command {
                             command: command.unwrap(),
                             value: DataType::BulkString(value.to_string()),
-                        }
+                        };
                     } else {
                         panic!("Haven't figured this out yet");
                     }
@@ -63,9 +62,7 @@ impl<'a> Command<'a> {
                     panic!("Haven't figured this out yet");
                 }
             }
-            _ => {
-                panic!("Improperly formed request.")
-            }
+            _ => panic!("Improperly formed request."),
         }
     }
 

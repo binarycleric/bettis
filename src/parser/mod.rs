@@ -35,9 +35,7 @@ impl<'a> ArrayParser<'a> {
                     current_idx: values_idx,
                 })
             }
-            None => {
-                Err("malformed string or something")
-            }
+            None => Err("malformed string or something"),
         }
     }
 
@@ -47,9 +45,7 @@ impl<'a> ArrayParser<'a> {
 
     fn get_current_type(&self) -> char {
         match self.get_current_value_string() {
-            Some(value) => {
-                value.get(..1).unwrap().parse::<char>().unwrap()
-            }
+            Some(value) => value.get(..1).unwrap().parse::<char>().unwrap(),
             None => {
                 panic!("I haven't figured the out yet");
             }
@@ -61,34 +57,27 @@ impl<'a> ArrayParser<'a> {
     }
 
     fn next_type_value(&self) -> (&'a str, usize) {
-        match self.get_current_value_string() {
-            Some(value) => {
-                let rtype = self.get_current_type();
+        let value = self.get_current_value_string().unwrap();
+        let rtype = self.get_current_type();
 
-                match rtype {
-                    SIMPLE_STRING_TOKEN => {
-                        let end_of_value_idx = value.find(super::REDIS_SEPARATOR).unwrap() + super::REDIS_SEPARATOR.len();
-                        let current_value = value.get(..end_of_value_idx).unwrap();
+        match rtype {
+            SIMPLE_STRING_TOKEN => {
+                let end_of_value_idx =
+                    value.find(super::REDIS_SEPARATOR).unwrap() + super::REDIS_SEPARATOR.len();
+                let current_value = value.get(..end_of_value_idx).unwrap();
 
-                        return (current_value, end_of_value_idx)
-                    }
-                    BULK_STRING_TOKEN => {
-                        let size_idx = value.find(super::REDIS_SEPARATOR).unwrap();
-                        // TODO: Error handling for invalid sizes.
-                        let size: usize = value.get(1..size_idx).unwrap().parse().unwrap();
-                        let end_of_value_idx = self.bulk_string_value_length(size);
-                        let current_value = value.get(..end_of_value_idx).unwrap();
-
-                        return (current_value, end_of_value_idx)
-                    }
-                    _ => {
-                        panic!("Fail to parse type: {:?}", rtype)
-                    }
-                }
+                (current_value, end_of_value_idx)
             }
-            None => {
-                panic!("Fail to get next value")
+            BULK_STRING_TOKEN => {
+                let size_idx = value.find(super::REDIS_SEPARATOR).unwrap();
+                // TODO: Error handling for invalid sizes.
+                let size: usize = value.get(1..size_idx).unwrap().parse().unwrap();
+                let end_of_value_idx = self.bulk_string_value_length(size);
+                let current_value = value.get(..end_of_value_idx).unwrap();
+
+                (current_value, end_of_value_idx)
             }
+            _ => panic!("Fail to parse type: {:?}", rtype),
         }
     }
 }
@@ -100,12 +89,12 @@ impl<'a> Iterator for ArrayParser<'a> {
         println!("Start of ArrayParser.next");
 
         if self.array_data.len() == self.current_idx {
-            return None
+            return None;
         }
 
         let (type_value, next_value_idx) = self.next_type_value();
-
         self.current_idx += next_value_idx;
+
         return Some(type_value);
     }
 }
@@ -120,8 +109,8 @@ impl<'a> Parser<'a> {
     }
 
     pub fn get_type(&self) -> char {
-      let rtype: char = self.incoming.get(0..1).unwrap().parse().unwrap();
-      return rtype;
+        let rtype: char = self.incoming.get(0..1).unwrap().parse().unwrap();
+        return rtype;
     }
 
     pub fn get_size(&self) -> Option<usize> {
@@ -146,16 +135,16 @@ impl<'a> Parser<'a> {
                 let value_idx: usize;
 
                 match self.incoming.get(1..).unwrap().find(super::REDIS_SEPARATOR) {
-                    Some(idx) => { value_idx = (idx + 1) }
-                    None => { value_idx = self.incoming.len() }
+                    Some(idx) => value_idx = (idx + 1),
+                    None => value_idx = self.incoming.len(),
                 }
 
                 match self.incoming.get(1..value_idx) {
-                    Some(value) => { Ok(DataType::SimpleString(value)) },
+                    Some(value) => Ok(DataType::SimpleString(value)),
                     None => {
-                      println!("something went wrong! {:?}", self.incoming);
+                        println!("something went wrong! {:?}", self.incoming);
 
-                      Err("Something went wrong!")
+                        Err("Something went wrong!")
                     }
                 }
             }
@@ -163,10 +152,12 @@ impl<'a> Parser<'a> {
                 let size: usize = self.get_size().unwrap();
                 let start_idx = 1 + size.to_string().len() + super::REDIS_SEPARATOR.len();
 
-                println!("size --> : {:?}", self.get_size().unwrap().to_string().len());
+                println!(
+                    "size --> : {:?}",
+                    self.get_size().unwrap().to_string().len()
+                );
                 println!("size_idx --> : {:?}", start_idx);
                 println!("incoming --> {:?}", self.incoming);
-
 
                 let value = self.incoming.get(start_idx..(start_idx + size)).unwrap();
 
@@ -177,20 +168,16 @@ impl<'a> Parser<'a> {
                 let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
                 let mut array_values = ArrayParser::new(self.incoming);
 
-//                for row in array_values {
-//                    array.push(row);
-//                }
+                //                for row in array_values {
+                //                    array.push(row);
+                //                }
 
-                return Ok(DataType::Array(array))
+                return Ok(DataType::Array(array));
             }
-            _ => {
-                return Err("Type not supported (yet).")
-            }
+            _ => return Err("Type not supported (yet)."),
         }
     }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -234,8 +221,7 @@ mod tests {
         assert_eq!(None, array_parser.next());
     }
 
-
-/*
+    /*
     #[test]
     fn it_returns_simple_string_from_request() {
         let request = "+Ok\r\n";

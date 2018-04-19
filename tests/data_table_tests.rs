@@ -1,7 +1,7 @@
 extern crate quarrie;
 
 use quarrie::storage::DataTable;
-use quarrie::types::{DataType, DataKey};
+use quarrie::types::{DataKey, DataType};
 
 #[test]
 fn it_sets_and_gets_values() {

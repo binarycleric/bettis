@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use types::{DataType, DataKey};
+use types::{DataKey, DataType};
 
 #[derive(Debug)]
 pub struct DataTable<'vlife> {
