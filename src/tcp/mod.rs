@@ -6,6 +6,7 @@ use std::net::TcpStream;
 
 use storage::DataTable;
 use parser::Parser;
+use types::{DataType, DataKey};
 use commands::Command;
 
 pub struct Server<'a> {
@@ -21,25 +22,25 @@ impl<'a> Server<'a> {
         };
     }
 
-    pub fn start(&self) {
+    pub fn start(&self, data_table: &DataTable) {
         let connection_string = self.ipaddr.to_owned() + ":" + self.port;
         let listener = TcpListener::bind(connection_string);
 
         match listener {
             Ok(listener) => {
                 println!("listening started, ready to accept");
-                self.dispatch(listener);
+                self.dispatch(listener, data_table);
             }
             Err(err) => println!("{:?}", err),
         }
     }
 
-    fn dispatch(&self, listener: TcpListener) {
+    fn dispatch(&self, listener: TcpListener, data_table: &DataTable) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let mut request = RequestHandler::new(&mut stream);
 
-            request.run();
+            request.run(data_table);
         }
     }
 }
@@ -55,7 +56,25 @@ impl<'tcp> RequestHandler<'tcp> {
         }
     }
 
-    pub fn run(&mut self) {
+    fn write_error(&mut self) {
+        self.stream.write(":1\r\n".as_bytes()).unwrap();
+    }
+
+    fn write_response(&mut self, response: &'static str) {
+        self.stream.write(response.as_bytes()).unwrap();
+        self.stream.flush().unwrap();
+    }
+
+    // TODO error handling for invalid types.
+    fn parse_to_value<'dtype>(&self, request: &'dtype Vec<u8>) -> DataType<'dtype> {
+        let request_string = str::from_utf8(&request).unwrap();
+        let parser = Parser::new(&request_string);
+        let redis_value = parser.to_data_type().unwrap();
+
+        return redis_value;
+    }
+
+    pub fn run(&mut self, data_table: &DataTable) {
         let mut buffer = vec![0; 128];
         let payload_size = self.stream.read(&mut buffer).unwrap();
 
@@ -64,18 +83,16 @@ impl<'tcp> RequestHandler<'tcp> {
         }
 
         let request = buffer[0..payload_size].to_vec();
-        let request_string = str::from_utf8(&request).unwrap();
-        let parser = Parser::new(&request_string);
-        let redis_value = parser.to_data_type().unwrap();
+        let redis_value = self.parse_to_value(&request);
+        let command = Command::new(redis_value);
 
-        match Command::build(redis_value).invoke() {
+        match command.invoke() {
             Ok(response) => {
-                self.stream.write(response.as_bytes()).unwrap();
-                self.stream.flush().unwrap();
-                self.run();
+                self.write_response(response);
+                self.run(data_table);
             }
             Err(_) => {
-                self.stream.write(":1\r\n".as_bytes()).unwrap();
+                self.write_error();
             }
         }
 
