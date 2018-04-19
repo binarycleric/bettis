@@ -37,19 +37,33 @@ impl<'a> Server<'a> {
     fn dispatch(&self, listener: TcpListener) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
-            self.process_command(&mut stream);
+            let mut processor = Processor::new(&mut stream);
+
+            processor.run();
+        }
+    }
+}
+
+struct Processor<'tcp> {
+    stream: &'tcp TcpStream,
+}
+
+impl<'tcp> Processor<'tcp> {
+    pub fn new(stream: &'tcp mut TcpStream) -> Processor<'tcp> {
+        Processor {
+            stream: stream,
         }
     }
 
-    fn process_command(&self, stream: &mut TcpStream) {
-        let mut buffer = [0; 128];
-        let payload_size = stream.read(&mut buffer).unwrap();
+    pub fn run(&mut self) {
+        let mut buffer = vec![0; 128];
+        let payload_size = self.stream.read(&mut buffer).unwrap();
 
         if payload_size == 0 {
             return;
         }
 
-        let request = &buffer[0..payload_size];
+        let request = buffer[0..payload_size].to_vec();
         let request_string = str::from_utf8(&request).unwrap();
         let parser = Parser::new(&request_string);
         let redis_value = parser.to_data_type().unwrap();
@@ -58,14 +72,12 @@ impl<'a> Server<'a> {
 
         match Command::build(redis_value).invoke() {
             Ok(response) => {
-                stream.write(response.as_bytes()).unwrap();
-                stream.flush().unwrap();
-                // TODO: Maybe figure out how to make this an iterator instead of
-                // using recursion.
-                self.process_command(stream);
+                self.stream.write(response.as_bytes()).unwrap();
+                self.stream.flush().unwrap();
+                self.run();
             }
             Err(_) => {
-                stream.write(":1\r\n".as_bytes()).unwrap();
+                self.stream.write(":1\r\n".as_bytes()).unwrap();
             }
         }
 
