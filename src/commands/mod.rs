@@ -59,7 +59,7 @@ impl<'a> Command<'a> {
         panic!("Invalid command");
     }
 
-    pub fn invoke<'dkey, 'dval>(&self, data_table: &mut DataTable<'dkey, 'dval>) -> Result<&'static str, &'static str> {
+    pub fn invoke(&self) -> Result<&'static str, &'static str> {
         match self.get_command() {
             Available::Select => {
                 println!("Invoke select...");

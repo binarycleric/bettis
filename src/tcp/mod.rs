@@ -21,27 +21,27 @@ impl<'a> Server<'a> {
         };
     }
 
-    pub fn start(&self, data_table: &mut DataTable) {
+    pub fn start(&self) {
         let connection_string = self.ipaddr.to_owned() + ":" + self.port;
         let listener = TcpListener::bind(connection_string);
 
         match listener {
             Ok(listener) => {
                 println!("listening started, ready to accept");
-                self.dispatch(listener, data_table);
+                self.dispatch(listener);
             }
             Err(err) => println!("{:?}", err),
         }
     }
 
-    fn dispatch(&self, listener: TcpListener, data_table: &mut DataTable) {
+    fn dispatch(&self, listener: TcpListener) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
-            self.process_command(&mut stream, data_table);
+            self.process_command(&mut stream);
         }
     }
 
-    fn process_command(&self, stream: &mut TcpStream, data_table: &mut DataTable) {
+    fn process_command(&self, stream: &mut TcpStream) {
         let mut buffer = [0; 128];
         let payload_size = stream.read(&mut buffer).unwrap();
 
@@ -56,13 +56,13 @@ impl<'a> Server<'a> {
 
         println!("{:?}", request_string);
 
-        match Command::build(redis_value).invoke(data_table) {
+        match Command::build(redis_value).invoke() {
             Ok(response) => {
                 stream.write(response.as_bytes()).unwrap();
                 stream.flush().unwrap();
                 // TODO: Maybe figure out how to make this an iterator instead of
                 // using recursion.
-                self.process_command(stream, data_table);
+                self.process_command(stream);
             }
             Err(_) => {
                 stream.write(":1\r\n".as_bytes()).unwrap();
@@ -70,8 +70,6 @@ impl<'a> Server<'a> {
         }
 
         println!("accepted incoming connection.");
-        println!("Data table: ");
-        println!("{:?}", data_table);
         println!("\n\n");
     }
 }
