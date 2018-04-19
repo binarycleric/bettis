@@ -166,11 +166,17 @@ impl<'a> Parser<'a> {
             ARRAY_TOKEN => {
                 let size: usize = self.get_size().unwrap();
                 let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
-                let mut array_values = ArrayParser::new(self.incoming);
 
-                //                for row in array_values {
-                //                    array.push(row);
-                //                }
+                for row in ArrayParser::new(self.incoming).unwrap() {
+                    match Parser::new(row).to_data_type() {
+                        Ok(value_type) => {
+                            array.push(value_type);
+                        }
+                        Err(_) => {
+                            panic!("Unsupported value type: {:?}", row);
+                        }
+                    }
+                }
 
                 return Ok(DataType::Array(array));
             }
@@ -221,7 +227,6 @@ mod tests {
         assert_eq!(None, array_parser.next());
     }
 
-    /*
     #[test]
     fn it_returns_simple_string_from_request() {
         let request = "+Ok\r\n";
@@ -229,45 +234,5 @@ mod tests {
         let expected = super::DataType::SimpleString("Ok");
 
         assert_eq!(Ok(expected), simple_string);
-    }
-
-    #[test]
-    fn it_parses_array_with_simple_string() {
-        let request = "*1\r\n+Ok\r\n";
-        let mut parser = ArrayParser::new(1, request);
-        let expected = super::DataType::SimpleString("Ok");
-
-        assert_eq!(Some(expected), parser.next());
-        assert_eq!(None, parser.next());
-    }
-
-    #[test]
-    fn it_parses_array_with_bulk_string() {
-        let request = "*1\r\n$2\r\nOk\r\n";
-        let mut parser = ArrayParser::new(1, request);
-        let expected = super::DataType::BulkString("Ok".to_string());
-
-        assert_eq!(Some(expected), parser.next());
-        assert_eq!(None, parser.next());
-    }
-
-    #[test]
-    fn it_returns_array_from_request() {
-        let request = "*1\r\n+Ok\r\n";
-        let array = super::Parser::new(request).to_data_type();
-        let expect_simple_string = super::DataType::SimpleString("Ok");
-        let expected = super::DataType::Array(vec![expect_simple_string]);
-
-        assert_eq!(Ok(expected), array);
-    }
-*/
-
-    #[test]
-    fn it_returns_bulk_string_from_request() {
-        let request = "$2\r\nOk\r\n";
-        let bulk_string = super::Parser::new(request).to_data_type();
-        let expect_bulk_string = super::DataType::BulkString("Ok".to_string());
-
-        assert_eq!(Ok(expect_bulk_string), bulk_string);
     }
 }
