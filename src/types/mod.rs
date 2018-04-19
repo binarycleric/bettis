@@ -1,9 +1,9 @@
 #[derive(Debug, PartialEq, Clone)]
-pub enum DataType<'data> {
-    SimpleString(&'data str),
-    BulkString(&'data str),
+pub enum DataType<'dtype> {
+    SimpleString(&'dtype str),
+    BulkString(&'dtype str),
     Integer(i64),
-    Array(Vec<DataType<'data>>),
+    Array(Vec<DataType<'dtype>>),
 }
 
 #[derive(Debug, Hash, Copy)]

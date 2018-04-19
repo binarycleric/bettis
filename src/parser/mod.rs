@@ -13,11 +13,8 @@ struct ArrayParser<'a> {
 
 impl<'a> ArrayParser<'a> {
     fn new(array_data: &'a str) -> Result<ArrayParser<'a>, &'static str> {
-        println!("New ArrayParser");
-        println!("\n\n");
-
-        let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
         // TODO: Check for correct rtype;
+        let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
         let array_size: usize;
         let values_idx: usize;
 

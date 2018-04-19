@@ -37,20 +37,20 @@ impl<'a> Server<'a> {
     fn dispatch(&self, listener: TcpListener) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
-            let mut processor = Processor::new(&mut stream);
+            let mut request = RequestHandler::new(&mut stream);
 
-            processor.run();
+            request.run();
         }
     }
 }
 
-struct Processor<'tcp> {
+struct RequestHandler<'tcp> {
     stream: &'tcp TcpStream,
 }
 
-impl<'tcp> Processor<'tcp> {
-    pub fn new(stream: &'tcp mut TcpStream) -> Processor<'tcp> {
-        Processor {
+impl<'tcp> RequestHandler<'tcp> {
+    pub fn new(stream: &'tcp mut TcpStream) -> RequestHandler<'tcp> {
+        RequestHandler {
             stream: stream,
         }
     }
@@ -67,8 +67,6 @@ impl<'tcp> Processor<'tcp> {
         let request_string = str::from_utf8(&request).unwrap();
         let parser = Parser::new(&request_string);
         let redis_value = parser.to_data_type().unwrap();
-
-        println!("{:?}", request_string);
 
         match Command::build(redis_value).invoke() {
             Ok(response) => {

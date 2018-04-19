@@ -24,7 +24,7 @@ fn it_returns_array_from_parser() {
 fn it_returns_bulk_string_from_parser() {
     let request = "$2\r\nOk\r\n";
     let bulk_string = Parser::new(request).to_data_type();
-    let expect_bulk_string = DataType::BulkString("Ok".to_string());
+    let expect_bulk_string = DataType::BulkString("Ok");
 
     assert_eq!(Ok(expect_bulk_string), bulk_string);
 }
