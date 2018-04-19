@@ -161,7 +161,7 @@ impl<'a> Parser<'a> {
 
                 let value = self.incoming.get(start_idx..(start_idx + size)).unwrap();
 
-                return Ok(DataType::BulkString(value.to_string()));
+                return Ok(DataType::BulkString(value));
             }
             ARRAY_TOKEN => {
                 let size: usize = self.get_size().unwrap();

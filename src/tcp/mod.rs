@@ -42,17 +42,17 @@ impl<'a> Server<'a> {
     }
 
     fn process_command(&self, stream: &mut TcpStream, data_table: &mut DataTable) {
-        let mut buffer = vec![0; 128];
+        let mut buffer = [0; 128];
         let payload_size = stream.read(&mut buffer).unwrap();
 
         if payload_size == 0 {
             return;
         }
 
-        buffer.truncate(payload_size);
-
-        let request_string = str::from_utf8(&buffer).unwrap().to_string();
-        let redis_value = Parser::new(&request_string).to_data_type().unwrap();
+        let request = &buffer[0..payload_size];
+        let request_string = str::from_utf8(&request).unwrap();
+        let parser = Parser::new(&request_string);
+        let redis_value = parser.to_data_type().unwrap();
 
         println!("{:?}", request_string);
 

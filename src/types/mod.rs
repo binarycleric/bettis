@@ -1,32 +1,32 @@
-#[derive(Debug, PartialEq)]
-pub enum DataType<'a> {
-    SimpleString(&'a str),
-    BulkString(String),
+#[derive(Debug, PartialEq, Clone)]
+pub enum DataType<'data> {
+    SimpleString(&'data str),
+    BulkString(&'data str),
     Integer(i64),
-    Array(Vec<DataType<'a>>),
+    Array(Vec<DataType<'data>>),
 }
 
 #[derive(Debug, Hash, Copy)]
-pub struct DataKey<'a> {
-    key: &'a str,
+pub struct DataKey<'dkey> {
+    key: &'dkey str,
 }
 
-impl<'a> Clone for DataKey<'a> {
-    fn clone(&self) -> DataKey<'a> {
+impl<'dkey> Clone for DataKey<'dkey> {
+    fn clone(&self) -> DataKey<'dkey> {
         *self
     }
 }
 
-impl<'a> DataKey<'a> {
-    pub fn new(key: &'a str) -> DataKey {
+impl<'dkey> DataKey<'dkey> {
+    pub fn new(key: &'dkey str) -> DataKey<'dkey> {
         return DataKey { key: key };
     }
 }
 
-impl<'a> PartialEq for DataKey<'a> {
+impl<'dkey> PartialEq for DataKey<'dkey> {
     fn eq(&self, other: &DataKey) -> bool {
         self.key == other.key
     }
 }
 
-impl<'a> Eq for DataKey<'a> {}
+impl<'dkey> Eq for DataKey<'dkey> {}
