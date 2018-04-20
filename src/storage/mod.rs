@@ -32,12 +32,14 @@ impl<'dt> DataTable<'dt> {
         };
     }
 
-    pub fn set(&mut self, key: DataKey, value: DataType<'dt>) {
-        self.value_map.insert(key, value);
+    pub fn set(&mut self, key: &'static str, value: DataType<'dt>) {
+        let data_key = DataKey::new(key);
+        self.value_map.insert(data_key, value);
     }
 
-    pub fn get(&self, key: &DataKey) -> Option<&DataType<'dt>> {
-        return self.value_map.get(&key);
+    pub fn get(&self, key: &'static str) -> Option<&DataType<'dt>> {
+        let data_key = DataKey::new(key);
+        return self.value_map.get(&data_key);
     }
 }
 
