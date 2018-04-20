@@ -73,16 +73,22 @@ impl Command {
 
                 if let DataType::BulkString(dk) = self.value[1].clone() {
                     data_table.set(&dk, self.value[2].clone());
+                    return Ok("+OK\r\n");
                 }
-
-                Ok("+OK\r\n")
+                println!("Something bad happened: {:?}", self.value);
+                Err("Something bad happened")
             }
             Available::Get => {
                 println!("Invoke get ...");
                 println!("VALUE --> {:?}", self.value);
 
-                // TODO: Figure out types and stuff.
-                Ok("$2\r\n23\r\n")
+                if let DataType::BulkString(dk) = self.value[1].clone() {
+                    let get_value = data_table.get(&dk);
+                    // TODO: Actually handle values.
+                    return Ok("$2\r\n23\r\n")
+                }
+                println!("Something bad happened: {:?}", self.value);
+                Err("Something bad happened")
             }
         }
     }
