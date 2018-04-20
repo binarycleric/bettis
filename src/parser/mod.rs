@@ -177,7 +177,7 @@ impl Parser {
                 println!("size_idx --> : {:?}", start_idx);
                 println!("incoming --> {:?}", self.incoming);
 
-                let value = self.get_incoming_range(start_idx, (start_idx + size)).unwrap();
+                let value = self.get_incoming_range(start_idx, start_idx + size).unwrap();
 
                 return Ok(DataType::BulkString(value));
             }

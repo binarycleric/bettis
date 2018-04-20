@@ -4,7 +4,7 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use storage::{DataTable, DataKey};
+use storage::DataTable;
 use parser::Parser;
 use types::DataType;
 use commands::Command;

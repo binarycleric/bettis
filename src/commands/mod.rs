@@ -1,4 +1,3 @@
-use storage::{DataTable, DataKey};
 use types::DataType;
 
 const SELECT_COMMAND: &'static str = "select";
