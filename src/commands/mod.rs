@@ -1,4 +1,5 @@
 use types::DataType;
+use storage::DataTable;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -58,7 +59,7 @@ impl Command {
         panic!("Invalid command");
     }
 
-    pub fn invoke(&self) -> Result<&'static str, &'static str> {
+    pub fn invoke(&self, data_table: &mut DataTable) -> Result<&'static str, &'static str> {
         match self.get_command() {
             Available::Select => {
                 println!("Invoke select...");
@@ -69,6 +70,10 @@ impl Command {
             Available::Set => {
                 println!("Invoke set...");
                 println!("VALUE --> {:?}", self.value);
+
+                if let DataType::BulkString(dk) = self.value[1].clone() {
+                    data_table.set(&dk, self.value[2].clone());
+                }
 
                 Ok("+OK\r\n")
             }

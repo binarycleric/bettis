@@ -22,7 +22,7 @@ impl<'a> Server<'a> {
         };
     }
 
-    pub fn start(&self, data_table: &DataTable) {
+    pub fn start(&self, data_table: &mut DataTable) {
         let connection_string = self.ipaddr.to_owned() + ":" + self.port;
         let listener = TcpListener::bind(connection_string);
 
@@ -35,7 +35,7 @@ impl<'a> Server<'a> {
         }
     }
 
-    fn dispatch(&self, listener: TcpListener, data_table: &DataTable) {
+    fn dispatch(&self, listener: TcpListener, data_table: &mut DataTable) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let mut request = RequestHandler::new(&mut stream);
@@ -74,7 +74,7 @@ impl<'tcp> RequestHandler<'tcp> {
         return redis_value;
     }
 
-    pub fn run(&mut self, data_table: &DataTable) {
+    pub fn run(&mut self, data_table: &mut DataTable) {
         let mut buffer = vec![0; 128];
         let payload_size = self.stream.read(&mut buffer).unwrap();
 
@@ -86,7 +86,7 @@ impl<'tcp> RequestHandler<'tcp> {
         let redis_value = self.parse_to_value(request);
         let command = Command::new(redis_value);
 
-        match command.invoke() {
+        match command.invoke(data_table) {
             Ok(response) => {
                 self.write_response(response);
                 self.run(data_table);
