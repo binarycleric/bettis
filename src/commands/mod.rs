@@ -1,5 +1,5 @@
-use storage::DataTable;
-use types::{DataType, DataKey};
+use storage::{DataTable, DataKey};
+use types::DataType;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";

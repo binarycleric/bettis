@@ -4,9 +4,9 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use storage::DataTable;
+use storage::{DataTable, DataKey};
 use parser::Parser;
-use types::{DataType, DataKey};
+use types::DataType;
 use commands::Command;
 
 pub struct Server<'a> {

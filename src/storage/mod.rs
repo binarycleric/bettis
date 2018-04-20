@@ -1,9 +1,28 @@
 use std::collections::HashMap;
-use types::{DataKey, DataType};
+use types::{DataType};
+
+#[derive(Debug, Hash, Copy, PartialEq, Eq)]
+pub struct DataKey {
+    key: &'static str,
+}
+
+impl Clone for DataKey {
+    fn clone(&self) -> DataKey {
+        *self
+    }
+}
+
+impl DataKey {
+    pub fn new(key: &'static str) -> DataKey {
+        return DataKey { key: key };
+    }
+}
+
+// ----
 
 #[derive(Debug)]
 pub struct DataTable<'dt> {
-    value_map: HashMap<DataKey<'dt>, DataType<'dt>>,
+    value_map: HashMap<DataKey, DataType<'dt>>,
 }
 
 impl<'dt> DataTable<'dt> {
@@ -13,11 +32,21 @@ impl<'dt> DataTable<'dt> {
         };
     }
 
-    pub fn set(&mut self, key: DataKey<'dt>, value: DataType<'dt>) {
+    pub fn set(&mut self, key: DataKey, value: DataType<'dt>) {
         self.value_map.insert(key, value);
     }
 
-    pub fn get(&self, key: &DataKey<'dt>) -> Option<&DataType<'dt>> {
+    pub fn get(&self, key: &DataKey) -> Option<&DataType<'dt>> {
         return self.value_map.get(&key);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DataTable;
+
+    #[test]
+    fn it_does_stuff() {
+
     }
 }
