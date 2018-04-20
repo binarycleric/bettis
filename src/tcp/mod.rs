@@ -66,9 +66,9 @@ impl<'tcp> RequestHandler<'tcp> {
     }
 
     // TODO error handling for invalid types.
-    fn parse_to_value<'dtype>(&self, request: &'dtype Vec<u8>) -> DataType<'dtype> {
-        let request_string = str::from_utf8(&request).unwrap();
-        let parser = Parser::new(&request_string);
+    fn parse_to_value(&self, request: Vec<u8>) -> DataType {
+        let request_string = String::from_utf8(request).unwrap();
+        let parser = Parser::new(request_string);
         let redis_value = parser.to_data_type().unwrap();
 
         return redis_value;
@@ -83,7 +83,7 @@ impl<'tcp> RequestHandler<'tcp> {
         }
 
         let request = buffer[0..payload_size].to_vec();
-        let redis_value = self.parse_to_value(&request);
+        let redis_value = self.parse_to_value(request);
         let command = Command::new(redis_value);
 
         match command.invoke() {

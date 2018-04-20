@@ -21,23 +21,23 @@ impl DataKey {
 // ----
 
 #[derive(Debug)]
-pub struct DataTable<'dt> {
-    value_map: HashMap<DataKey, DataType<'dt>>,
+pub struct DataTable {
+    value_map: HashMap<DataKey, DataType>,
 }
 
-impl<'dt> DataTable<'dt> {
-    pub fn new() -> DataTable<'dt> {
+impl DataTable {
+    pub fn new() -> DataTable {
         return DataTable {
             value_map: HashMap::new(),
         };
     }
 
-    pub fn set(&mut self, key: &'static str, value: DataType<'dt>) {
+    pub fn set(&mut self, key: &'static str, value: DataType) {
         let data_key = DataKey::new(key);
         self.value_map.insert(data_key, value);
     }
 
-    pub fn get(&self, key: &'static str) -> Option<&DataType<'dt>> {
+    pub fn get(&self, key: &'static str) -> Option<&DataType> {
         let data_key = DataKey::new(key);
         return self.value_map.get(&data_key);
     }

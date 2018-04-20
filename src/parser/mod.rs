@@ -5,14 +5,14 @@ const SIMPLE_STRING_TOKEN: char = '+';
 const ARRAY_TOKEN: char = '*';
 
 #[derive(Debug)]
-struct ArrayParser<'a> {
-    array_data: &'a str,
+struct ArrayParser {
+    array_data: String,
     size: usize,
     current_idx: usize,
 }
 
-impl<'a> ArrayParser<'a> {
-    fn new(array_data: &'a str) -> Result<ArrayParser<'a>, &'static str> {
+impl ArrayParser {
+    fn new(array_data: String) -> Result<ArrayParser, &'static str> {
         // TODO: Check for correct rtype;
         let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
         let array_size: usize;
@@ -36,13 +36,20 @@ impl<'a> ArrayParser<'a> {
         }
     }
 
-    fn get_current_value_string(&self) -> Option<&'a str> {
-        return self.array_data.get(self.current_idx..);
+    fn get_current_value_string<'a>(&self) -> Option<String> {
+        match self.array_data.get(self.current_idx..) {
+            Some(val) => {
+                Some(val.to_string())
+            }
+            None => None
+        }
     }
 
     fn get_current_type(&self) -> char {
         match self.get_current_value_string() {
-            Some(value) => value.get(..1).unwrap().parse::<char>().unwrap(),
+            Some(value) => {
+                value.get(..1).unwrap().parse::<char>().unwrap()
+            }
             None => {
                 panic!("I haven't figured the out yet");
             }
@@ -53,7 +60,7 @@ impl<'a> ArrayParser<'a> {
         1 + size.to_string().len() + (super::REDIS_SEPARATOR.len() * 2) + size
     }
 
-    fn next_type_value(&self) -> (&'a str, usize) {
+    fn next_type_value(&self) -> (String, usize) {
         let value = self.get_current_value_string().unwrap();
         let rtype = self.get_current_type();
 
@@ -63,7 +70,7 @@ impl<'a> ArrayParser<'a> {
                     value.find(super::REDIS_SEPARATOR).unwrap() + super::REDIS_SEPARATOR.len();
                 let current_value = value.get(..end_of_value_idx).unwrap();
 
-                (current_value, end_of_value_idx)
+                (current_value.to_string(), end_of_value_idx)
             }
             BULK_STRING_TOKEN => {
                 let size_idx = value.find(super::REDIS_SEPARATOR).unwrap();
@@ -72,15 +79,15 @@ impl<'a> ArrayParser<'a> {
                 let end_of_value_idx = self.bulk_string_value_length(size);
                 let current_value = value.get(..end_of_value_idx).unwrap();
 
-                (current_value, end_of_value_idx)
+                (current_value.to_string(), end_of_value_idx)
             }
             _ => panic!("Fail to parse type: {:?}", rtype),
         }
     }
 }
 
-impl<'a> Iterator for ArrayParser<'a> {
-    type Item = &'a str;
+impl Iterator for ArrayParser {
+    type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
         println!("Start of ArrayParser.next");
@@ -96,12 +103,12 @@ impl<'a> Iterator for ArrayParser<'a> {
     }
 }
 
-pub struct Parser<'a> {
-    incoming: &'a str,
+pub struct Parser {
+    incoming: String,
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(incoming: &'a str) -> Parser<'a> {
+impl Parser {
+    pub fn new(incoming: String) -> Parser {
         return Parser { incoming: incoming };
     }
 
@@ -124,19 +131,33 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn get_incoming_range(&self, start: usize, finish: usize) -> Option<String> {
+        match self.incoming.get(start..finish) {
+            Some(value) => Some(value.to_string()),
+                None => None
+        }
+    }
+
+    fn get_incoming_starting_at(&self, start: usize) -> Option<String> {
+        match self.incoming.get(start..) {
+            Some(value) => Some(value.to_string()),
+            None => None
+        }
+    }
+
     // TODO: This method probably leaks memory because I still don't fully
     //       understand lifetimes.
-    pub fn to_data_type(&self) -> Result<DataType<'a>, &'static str> {
+    pub fn to_data_type(&self) -> Result<DataType, &'static str> {
         match self.get_type() {
             SIMPLE_STRING_TOKEN => {
                 let value_idx: usize;
 
-                match self.incoming.get(1..).unwrap().find(super::REDIS_SEPARATOR) {
+                match self.get_incoming_starting_at(1).unwrap().find(super::REDIS_SEPARATOR) {
                     Some(idx) => value_idx = idx + 1,
                     None => value_idx = self.incoming.len(),
                 }
 
-                match self.incoming.get(1..value_idx) {
+                match self.get_incoming_range(1, value_idx) {
                     Some(value) => Ok(DataType::SimpleString(value)),
                     None => {
                         println!("something went wrong! {:?}", self.incoming);
@@ -156,21 +177,22 @@ impl<'a> Parser<'a> {
                 println!("size_idx --> : {:?}", start_idx);
                 println!("incoming --> {:?}", self.incoming);
 
-                let value = self.incoming.get(start_idx..(start_idx + size)).unwrap();
+                let value = self.get_incoming_range(start_idx, (start_idx + size)).unwrap();
 
                 return Ok(DataType::BulkString(value));
             }
             ARRAY_TOKEN => {
                 let size: usize = self.get_size().unwrap();
-                let mut array: Vec<DataType<'a>> = Vec::with_capacity(size);
+                let mut array: Vec<DataType> = Vec::with_capacity(size);
 
-                for row in ArrayParser::new(self.incoming).unwrap() {
+                for row in ArrayParser::new(self.incoming.to_string()).unwrap() {
                     match Parser::new(row).to_data_type() {
                         Ok(value_type) => {
                             array.push(value_type);
                         }
                         Err(_) => {
-                            panic!("Unsupported value type: {:?}", row);
+                            panic!("Argh.")
+                            // panic!("Unsupported value type: {:?}", row);
                         }
                     }
                 }
@@ -188,47 +210,47 @@ mod tests {
 
     #[test]
     fn it_builds_new_array_parser() {
-        let request = "*1\r\n+Ok\r\n";
+        let request = "*1\r\n+Ok\r\n".to_string();
         let mut array_parser = ArrayParser::new(request).unwrap();
 
-        assert_eq!(Some("+Ok\r\n"), array_parser.next());
+        assert_eq!(Some("+Ok\r\n".to_string()), array_parser.next());
         assert_eq!(None, array_parser.next());
     }
 
     #[test]
     fn it_parses_bulk_string_in_array() {
-        let request = "*1\r\n$2\r\nOk\r\n";
+        let request = "*1\r\n$2\r\nOk\r\n".to_string();
         let mut array_parser = ArrayParser::new(request).unwrap();
 
-        assert_eq!(Some("$2\r\nOk\r\n"), array_parser.next());
+        assert_eq!(Some("$2\r\nOk\r\n".to_string()), array_parser.next());
         assert_eq!(None, array_parser.next());
     }
 
     #[test]
     fn it_parses_two_bulk_strings_in_array() {
-        let request = "*1\r\n$2\r\nOk\r\n$4\r\nFail\r\n";
+        let request = "*1\r\n$2\r\nOk\r\n$4\r\nFail\r\n".to_string();
         let mut array_parser = ArrayParser::new(request).unwrap();
 
-        assert_eq!(Some("$2\r\nOk\r\n"), array_parser.next());
-        assert_eq!(Some("$4\r\nFail\r\n"), array_parser.next());
+        assert_eq!(Some("$2\r\nOk\r\n".to_string()), array_parser.next());
+        assert_eq!(Some("$4\r\nFail\r\n".to_string()), array_parser.next());
         assert_eq!(None, array_parser.next());
     }
 
     #[test]
     fn array_parser_handles_two_simple_strings() {
-        let request = "*1\r\n+Ok\r\n+nFail\r\n";
+        let request = "*1\r\n+Ok\r\n+nFail\r\n".to_string();
         let mut array_parser = ArrayParser::new(request).unwrap();
 
-        assert_eq!(Some("+Ok\r\n"), array_parser.next());
-        assert_eq!(Some("+nFail\r\n"), array_parser.next());
+        assert_eq!(Some("+Ok\r\n".to_string()), array_parser.next());
+        assert_eq!(Some("+nFail\r\n".to_string()), array_parser.next());
         assert_eq!(None, array_parser.next());
     }
 
     #[test]
     fn it_returns_simple_string_from_request() {
-        let request = "+Ok\r\n";
+        let request = "+Ok\r\n".to_string();
         let simple_string = super::Parser::new(request).to_data_type();
-        let expected = super::DataType::SimpleString("Ok");
+        let expected = super::DataType::SimpleString("Ok".to_string());
 
         assert_eq!(Ok(expected), simple_string);
     }

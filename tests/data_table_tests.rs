@@ -16,8 +16,8 @@ fn it_sets_and_gets_values() {
 #[test]
 fn it_returns_set_bulk_string() {
     let mut table = DataTable::new();
-    let value = DataType::BulkString("test bulk string");
-    let expected = DataType::BulkString("test bulk string");
+    let value = DataType::BulkString("test bulk string".to_string());
+    let expected = DataType::BulkString("test bulk string".to_string());
 
     table.set("example", value);
     assert_eq!(Some(&expected), table.get("example"));
@@ -26,8 +26,8 @@ fn it_returns_set_bulk_string() {
 #[test]
 fn it_returns_set_integer() {
     let mut table = DataTable::new();
-    let value = DataType::SimpleString("test");
-    let expected = DataType::SimpleString("test");
+    let value = DataType::SimpleString("test".to_string());
+    let expected = DataType::SimpleString("test".to_string());
 
     table.set("example", value);
     assert_eq!(Some(&expected), table.get("example"));

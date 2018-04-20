@@ -24,8 +24,8 @@ impl Available {
 }
 
 #[derive(Debug)]
-pub struct Command<'a> {
-    value: Vec<DataType<'a>>,
+pub struct Command {
+    value: Vec<DataType>,
 }
 
 #[cfg(test)]
@@ -40,10 +40,10 @@ mod tests {
     }
 }
 
-impl<'a> Command<'a> {
+impl Command {
     // TODO: This method is a total mess and I don't trust it at all.
     // Needs a pretty serious refactor.
-    pub fn new(redis_value: DataType<'a>) -> Command<'a> {
+    pub fn new(redis_value: DataType) -> Command {
         match redis_value {
             DataType::Array(array) => {
                 Command { value: array.to_vec() }
