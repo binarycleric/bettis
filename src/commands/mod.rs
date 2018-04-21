@@ -1,5 +1,5 @@
 use types::DataType;
-use storage::DataTable;
+use storage::Database;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -59,7 +59,7 @@ impl Command {
         panic!("Invalid command");
     }
 
-    pub fn invoke(&self, data_table: &mut DataTable) -> Result<String, &'static str> {
+    pub fn invoke(&self, data_table: &mut Database) -> Result<String, &'static str> {
         match self.get_command() {
             Available::Select => {
                 println!("Invoke select...");

@@ -21,13 +21,13 @@ impl DataKey {
 // ----
 
 #[derive(Debug)]
-pub struct DataTable {
+pub struct Database {
     value_map: HashMap<DataKey, DataType>,
 }
 
-impl DataTable {
-    pub fn new() -> DataTable {
-        return DataTable {
+impl Database {
+    pub fn new() -> Database {
+        return Database {
             value_map: HashMap::new(),
         };
     }
@@ -45,7 +45,7 @@ impl DataTable {
 
 #[cfg(test)]
 mod tests {
-    use super::DataTable;
+    use super::Database;
 
     #[test]
     fn it_does_stuff() {}

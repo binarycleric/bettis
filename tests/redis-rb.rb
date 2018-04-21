@@ -4,16 +4,17 @@ require "pp"
 
 redis = Redis.new(host: "127.0.0.1", port: 6379, db: 15)
 
-=begin
 redis.set("test", 23)
+puts "test key"
 pp redis.get("test")
 
 redis.set("test", 24)
+puts "modified test key"
 pp redis.get("test")
 
 redis.set("test-2", "nice")
+puts "test-2 key"
 pp redis.get("test-2")
-=end
 
 redis.set("test-3", "Woohoo\r\nThis\r\nIs\r\nSuper\r\nWeird")
 pp redis.get("test-3")

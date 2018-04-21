@@ -4,7 +4,7 @@ use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
-use storage::DataTable;
+use storage::Database;
 use parser::Parser;
 use types::DataType;
 use commands::Command;
@@ -22,7 +22,7 @@ impl<'a> Server<'a> {
         };
     }
 
-    pub fn start(&self, data_table: &mut DataTable) {
+    pub fn start(&self, data_table: &mut Database) {
         let connection_string = self.ipaddr.to_owned() + ":" + self.port;
         let listener = TcpListener::bind(connection_string);
 
@@ -35,7 +35,7 @@ impl<'a> Server<'a> {
         }
     }
 
-    fn dispatch(&self, listener: TcpListener, data_table: &mut DataTable) {
+    fn dispatch(&self, listener: TcpListener, data_table: &mut Database) {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let mut request = RequestHandler::new(&mut stream);
@@ -73,7 +73,7 @@ impl<'tcp> RequestHandler<'tcp> {
         return redis_value;
     }
 
-    pub fn run(&mut self, data_table: &mut DataTable) {
+    pub fn run(&mut self, data_table: &mut Database) {
         let mut buffer = vec![0; 128];
         let payload_size = self.stream.read(&mut buffer).unwrap();
 
