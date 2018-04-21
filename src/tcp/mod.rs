@@ -52,9 +52,7 @@ struct RequestHandler<'tcp> {
 
 impl<'tcp> RequestHandler<'tcp> {
     pub fn new(stream: &'tcp mut TcpStream) -> RequestHandler<'tcp> {
-        RequestHandler {
-            stream: stream,
-        }
+        RequestHandler { stream: stream }
     }
 
     fn write_error(&mut self) {

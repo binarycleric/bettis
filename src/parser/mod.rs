@@ -38,18 +38,14 @@ impl ArrayParser {
 
     fn get_current_value_string<'a>(&self) -> Option<String> {
         match self.array_data.get(self.current_idx..) {
-            Some(val) => {
-                Some(val.to_string())
-            }
-            None => None
+            Some(val) => Some(val.to_string()),
+            None => None,
         }
     }
 
     fn get_current_type(&self) -> char {
         match self.get_current_value_string() {
-            Some(value) => {
-                value.get(..1).unwrap().parse::<char>().unwrap()
-            }
+            Some(value) => value.get(..1).unwrap().parse::<char>().unwrap(),
             None => {
                 panic!("I haven't figured the out yet");
             }
@@ -134,14 +130,14 @@ impl Parser {
     fn get_incoming_range(&self, start: usize, finish: usize) -> Option<String> {
         match self.incoming.get(start..finish) {
             Some(value) => Some(value.to_string()),
-                None => None
+            None => None,
         }
     }
 
     fn get_incoming_starting_at(&self, start: usize) -> Option<String> {
         match self.incoming.get(start..) {
             Some(value) => Some(value.to_string()),
-            None => None
+            None => None,
         }
     }
 
@@ -152,7 +148,10 @@ impl Parser {
             SIMPLE_STRING_TOKEN => {
                 let value_idx: usize;
 
-                match self.get_incoming_starting_at(1).unwrap().find(super::REDIS_SEPARATOR) {
+                match self.get_incoming_starting_at(1)
+                    .unwrap()
+                    .find(super::REDIS_SEPARATOR)
+                {
                     Some(idx) => value_idx = idx + 1,
                     None => value_idx = self.incoming.len(),
                 }
@@ -177,7 +176,8 @@ impl Parser {
                 println!("size_idx --> : {:?}", start_idx);
                 println!("incoming --> {:?}", self.incoming);
 
-                let value = self.get_incoming_range(start_idx, start_idx + size).unwrap();
+                let value = self.get_incoming_range(start_idx, start_idx + size)
+                    .unwrap();
 
                 return Ok(DataType::BulkString(value));
             }

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use types::{DataType};
+use types::DataType;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct DataKey {
@@ -48,7 +48,5 @@ mod tests {
     use super::DataTable;
 
     #[test]
-    fn it_does_stuff() {
-
-    }
+    fn it_does_stuff() {}
 }

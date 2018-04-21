@@ -45,9 +45,9 @@ impl Command {
     // Needs a pretty serious refactor.
     pub fn new(redis_value: DataType) -> Command {
         match redis_value {
-            DataType::Array(array) => {
-                Command { value: array.to_vec() }
-            }
+            DataType::Array(array) => Command {
+                value: array.to_vec(),
+            },
             _ => panic!("Improperly formed request."),
         }
     }
@@ -84,12 +84,8 @@ impl Command {
 
                 if let DataType::BulkString(dk) = self.value[1].clone() {
                     match data_table.get(&dk) {
-                        Some(value) => {
-                            return Ok(value.to_redis_protocol())
-                        }
-                        None => {
-                            return Err("-MalformedValue\r\n")
-                        }
+                        Some(value) => return Ok(value.to_redis_protocol()),
+                        None => return Err("-MalformedValue\r\n"),
                     }
                 }
                 println!("Something bad happened: {:?}", self.value);

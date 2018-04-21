@@ -9,15 +9,9 @@ pub enum DataType {
 impl DataType {
     pub fn to_redis_protocol<'p>(&self) -> String {
         match *self {
-            DataType::SimpleString(ref x) => {
-                format!("+{}\r\n", x)
-            }
-            DataType::BulkString(ref x) => {
-                format!("${}\r\n{}\r\n", x.len(), x)
-            }
-            DataType::Integer(ref x) => {
-                format!(":{}\r\n", x)
-            }
+            DataType::SimpleString(ref x) => format!("+{}\r\n", x),
+            DataType::BulkString(ref x) => format!("${}\r\n{}\r\n", x.len(), x),
+            DataType::Integer(ref x) => format!(":{}\r\n", x),
             DataType::Array(ref array) => {
                 let mut retval = format!("*{}\r\n", array.len());
                 for row in array {
