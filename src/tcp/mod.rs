@@ -62,7 +62,7 @@ impl<'tcp> RequestHandler<'tcp> {
         self.stream.write(":1\r\n".as_bytes()).unwrap();
     }
 
-    fn write_response(&mut self, response: &'static str) {
+    fn write_response(&mut self, response: String) {
         self.stream.write(response.as_bytes()).unwrap();
         self.stream.flush().unwrap();
     }

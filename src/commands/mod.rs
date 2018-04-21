@@ -59,13 +59,13 @@ impl Command {
         panic!("Invalid command");
     }
 
-    pub fn invoke(&self, data_table: &mut DataTable) -> Result<&'static str, &'static str> {
+    pub fn invoke(&self, data_table: &mut DataTable) -> Result<String, &'static str> {
         match self.get_command() {
             Available::Select => {
                 println!("Invoke select...");
                 println!("VALUE --> {:?}", self.value);
 
-                Ok("+OK\r\n")
+                Ok("+OK\r\n".to_string())
             }
             Available::Set => {
                 println!("Invoke set...");
@@ -73,7 +73,7 @@ impl Command {
 
                 if let DataType::BulkString(dk) = self.value[1].clone() {
                     data_table.set(&dk, self.value[2].clone());
-                    return Ok("+OK\r\n");
+                    return Ok("+OK\r\n".to_string());
                 }
                 println!("Something bad happened: {:?}", self.value);
                 Err("Something bad happened")
@@ -83,9 +83,14 @@ impl Command {
                 println!("VALUE --> {:?}", self.value);
 
                 if let DataType::BulkString(dk) = self.value[1].clone() {
-                    let get_value = data_table.get(&dk);
-                    // TODO: Actually handle values.
-                    return Ok("$2\r\n23\r\n")
+                    match data_table.get(&dk) {
+                        Some(value) => {
+                            return Ok(value.to_redis_protocol())
+                        }
+                        None => {
+                            return Err("-MalformedValue\r\n")
+                        }
+                    }
                 }
                 println!("Something bad happened: {:?}", self.value);
                 Err("Something bad happened")
