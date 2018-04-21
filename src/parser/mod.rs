@@ -2,9 +2,11 @@ use types::DataType;
 
 const BULK_STRING_TOKEN: char = '$';
 const SIMPLE_STRING_TOKEN: char = '+';
+const INTEGER_TOKEN: char = ':';
 const ARRAY_TOKEN: char = '*';
+const ERROR_TOKEN: char = '-';
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct ArrayParser {
     array_data: String,
     size: usize,
@@ -13,8 +15,11 @@ struct ArrayParser {
 
 impl ArrayParser {
     fn new(array_data: String) -> Result<ArrayParser, &'static str> {
-        // TODO: Check for correct rtype;
         let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
+        if rtype != ARRAY_TOKEN {
+            return Err("Provided type is not an Array");
+        }
+
         let array_size: usize;
         let values_idx: usize;
 
@@ -86,8 +91,6 @@ impl Iterator for ArrayParser {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        println!("Start of ArrayParser.next");
-
         if self.array_data.len() == self.current_idx {
             return None;
         }
@@ -141,8 +144,6 @@ impl Parser {
         }
     }
 
-    // TODO: This method probably leaks memory because I still don't fully
-    //       understand lifetimes.
     pub fn to_data_type(&self) -> Result<DataType, &'static str> {
         match self.get_type() {
             SIMPLE_STRING_TOKEN => {
@@ -190,16 +191,38 @@ impl Parser {
                         Ok(value_type) => {
                             array.push(value_type);
                         }
-                        Err(_) => {
-                            panic!("Argh.")
-                            // panic!("Unsupported value type: {:?}", row);
+                        Err(err) => {
+                            return Err(err);
                         }
                     }
                 }
-
                 return Ok(DataType::Array(array));
             }
-            _ => return Err("Type not supported (yet)."),
+            INTEGER_TOKEN => {
+                let value_idx: usize;
+
+                match self.get_incoming_starting_at(1)
+                    .unwrap()
+                    .find(super::REDIS_SEPARATOR)
+                {
+                    Some(idx) => value_idx = idx + 1,
+                    None => value_idx = self.incoming.len(),
+                }
+
+                match self.get_incoming_range(1, value_idx) {
+                    Some(value) => {
+                        let int_value: i64 = value.parse().unwrap();
+                        Ok(DataType::Integer(int_value))
+                    }
+                    None => {
+                        println!("something went wrong! {:?}", self.incoming);
+                        Err("Something went wrong!")
+                    }
+                }
+            }
+            _ => {
+                return Err("Type not supported (yet).")
+            }
         }
     }
 }
@@ -215,6 +238,14 @@ mod tests {
 
         assert_eq!(Some("+Ok\r\n".to_string()), array_parser.next());
         assert_eq!(None, array_parser.next());
+    }
+
+    #[test]
+    fn it_returns_error_if_array_is_not_provided() {
+        let request = "$2\r\nOk\r\n".to_string();
+        let array_parser = ArrayParser::new(request);
+
+        assert_eq!(Err("Provided type is not an Array"), array_parser);
     }
 
     #[test]
@@ -253,5 +284,14 @@ mod tests {
         let expected = super::DataType::SimpleString("Ok".to_string());
 
         assert_eq!(Ok(expected), simple_string);
+    }
+
+    #[test]
+    fn it_returns_integer_from_request() {
+        let request = ":20\r\n".to_string();
+        let integer = super::Parser::new(request).to_data_type();
+        let expected = super::DataType::Integer(20);
+
+        assert_eq!(Ok(expected), integer);
     }
 }
