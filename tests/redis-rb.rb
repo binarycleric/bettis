@@ -12,5 +12,5 @@ pp redis.get("test")
 redis.set("test-2", "nice")
 pp redis.get("test-2")
 
-redis.set("test-3", 'Woohoo\r\nThis\r\nIs\r\nSuper\r\nWeird')
+redis.set("test-3", "Woohoo\r\nThis\r\nIs\r\nSuper\r\nWeird")
 pp redis.get("test-3")

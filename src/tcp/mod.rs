@@ -41,7 +41,6 @@ impl<'a> Server<'a> {
             let mut request = RequestHandler::new(&mut stream);
 
             request.run(data_table);
-
             println!("data_table --> {:?}", data_table);
         }
     }
