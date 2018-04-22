@@ -54,5 +54,4 @@ mod tests {
 
         assert_eq!("*2\r\n:42\r\n:43\r\n", redis_array.to_redis_protocol())
     }
-
 }
