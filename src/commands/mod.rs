@@ -71,12 +71,17 @@ impl Command {
                 println!("Invoke set...");
                 println!("VALUE --> {:?}", self.value);
 
-                if let DataType::BulkString(dk) = self.value[1].clone() {
-                    data_table.set(&dk, self.value[2].clone());
-                    return Ok("+OK\r\n".to_string());
+                match self.value[1].clone() {
+                    DataType::BulkString(dk) => {
+                        data_table.set(&dk, self.value[2].clone());
+
+                        Ok("+OK\r\n".to_string())
+                    }
+                    _ => {
+                        println!("Something bad happened: {:?}", self.value);
+                        Err("Something bad happened")
+                    }
                 }
-                println!("Something bad happened: {:?}", self.value);
-                Err("Something bad happened")
             }
             Available::Get => {
                 println!("Invoke get ...");

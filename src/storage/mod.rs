@@ -6,19 +6,11 @@ pub struct DataKey {
     key: String,
 }
 
-//impl Clone for DataKey {
-//    fn clone(&self) -> DataKey {
-//        *self
-//    }
-//}
-
 impl DataKey {
     pub fn new(key: String) -> DataKey {
         return DataKey { key: key };
     }
 }
-
-// ----
 
 #[derive(Debug)]
 pub struct Database {
@@ -46,7 +38,13 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
+    use types::DataType;
 
     #[test]
-    fn it_does_stuff() {}
+    fn it_sets_data_value_key() {
+        let mut database = Database::new();
+        let data_type = DataType::SimpleString("Ok".to_string());
+
+        database.set("example", data_type);
+    }
 }
