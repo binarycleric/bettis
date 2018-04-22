@@ -4,12 +4,16 @@ use storage::Database;
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
 const GET_COMMAND: &'static str = "get";
+const INCR_COMMAND: &'static str = "incr";
+const DECR_COMMAND: &'static str = "decr";
 
 #[derive(Debug, PartialEq)]
 enum Available {
     Select,
     Set,
     Get,
+    Incr,
+    Decr,
 }
 
 impl Available {
@@ -18,6 +22,8 @@ impl Available {
             SELECT_COMMAND => Ok(Available::Select),
             SET_COMMAND => Ok(Available::Set),
             GET_COMMAND => Ok(Available::Get),
+            INCR_COMMAND => Ok(Available::Incr),
+            DECR_COMMAND => Ok(Available::Decr),
             _ => Err("Invalid redis command"),
         }
     }
@@ -66,6 +72,36 @@ impl Command {
                 println!("VALUE --> {:?}", self.value);
 
                 Ok("+OK\r\n".to_string())
+            }
+            Available::Decr => {
+                println!("Invoke decr...");
+                println!("VALUE --> {:?}", self.value);
+
+                match self.value[1].clone() {
+                    DataType::BulkString(dk) => {
+                        data_table.decr(&dk);
+                        Ok("+OK\r\n".to_string())
+                    }
+                    _ => {
+                        println!("Something bad happened: {:?}", self.value);
+                        Err("Something bad happened")
+                    }
+                }
+            }
+            Available::Incr => {
+                println!("Invoke incr...");
+                println!("VALUE --> {:?}", self.value);
+
+                match self.value[1].clone() {
+                    DataType::BulkString(dk) => {
+                        data_table.incr(&dk);
+                        Ok("+OK\r\n".to_string())
+                    }
+                    _ => {
+                        println!("Something bad happened: {:?}", self.value);
+                        Err("Something bad happened")
+                    }
+                }
             }
             Available::Set => {
                 println!("Invoke set...");

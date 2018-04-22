@@ -33,6 +33,45 @@ impl Database {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.get(&data_key);
     }
+
+    pub fn incr<'kl>(&mut self, key: &'kl str) {
+        let incr_value: i64;
+
+        match self.get(key) {
+            Some(value) => {
+                if let DataType::Integer(ival) = *value {
+                    incr_value = ival + 1;
+                } else {
+                    panic!("Not sure what's up! {:?}", value);
+                }
+            }
+            None => {
+                incr_value = 1;
+            }
+        }
+
+        self.set(key, DataType::Integer(incr_value))
+    }
+
+    pub fn decr<'kl>(&mut self, key: &'kl str) {
+        let decr_value: i64;
+
+        match self.get(key) {
+            Some(value) => {
+                if let DataType::Integer(ival) = *value {
+                    decr_value = ival - 1;
+                } else {
+                    panic!("Not sure what's up! {:?}", value);
+                }
+            }
+            None => {
+                decr_value = 0;
+            }
+        }
+
+        self.set(key, DataType::Integer(decr_value))
+
+    }
 }
 
 #[cfg(test)]
