@@ -6,6 +6,7 @@ const SET_COMMAND: &'static str = "set";
 const GET_COMMAND: &'static str = "get";
 const INCR_COMMAND: &'static str = "incr";
 const DECR_COMMAND: &'static str = "decr";
+const DEL_COMMAND: &'static str = "del";
 
 #[derive(Debug, PartialEq)]
 enum Available {
@@ -14,6 +15,7 @@ enum Available {
     Get,
     Incr,
     Decr,
+    Del,
 }
 
 impl Available {
@@ -24,6 +26,7 @@ impl Available {
             GET_COMMAND => Ok(Available::Get),
             INCR_COMMAND => Ok(Available::Incr),
             DECR_COMMAND => Ok(Available::Decr),
+            DEL_COMMAND => Ok(Available::Del),
             _ => Err("Invalid redis command"),
         }
     }
@@ -73,6 +76,21 @@ impl Command {
 
                 Ok("+OK\r\n".to_string())
             }
+            Available::Del => {
+                println!("Invoke del...");
+                println!("VALUE --> {:?}", self.value);
+
+                match self.value[1].clone() {
+                    DataType::BulkString(dk) => {
+                        data_table.del(&dk);
+                        Ok("+OK\r\n".to_string())
+                    }
+                    _ => {
+                        println!("Something bad happened: {:?}", self.value);
+                        Err("Something bad happened")
+                    }
+                }
+            },
             Available::Decr => {
                 println!("Invoke decr...");
                 println!("VALUE --> {:?}", self.value);

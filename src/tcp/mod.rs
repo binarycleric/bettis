@@ -94,8 +94,5 @@ impl<'tcp> RequestHandler<'tcp> {
                 self.write_error();
             }
         }
-
-        println!("accepted incoming connection.");
-        println!("\n\n");
     }
 }

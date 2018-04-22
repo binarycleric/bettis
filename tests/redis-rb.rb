@@ -2,6 +2,8 @@ require "redis"
 require "pry"
 require "pp"
 
+
+
 def incr_tests
   25.times { @redis.incr("incr-test") }
 
@@ -16,6 +18,9 @@ def decr_tests
 end
 
 @redis = Redis.new(host: "127.0.0.1", port: 6379, db: 15)
+
+@redis.del("incr-test")
+@redis.del("decr-test")
 
 puts "Running Reddis tests\n\n"
 incr_tests

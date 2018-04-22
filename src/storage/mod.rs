@@ -34,6 +34,11 @@ impl Database {
         return self.value_map.get(&data_key);
     }
 
+    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<DataType> {
+        let data_key = DataKey::new(key.to_string());
+        return self.value_map.remove(&data_key)
+    }
+
     pub fn incr<'kl>(&mut self, key: &'kl str) {
         let incr_value: i64;
 
