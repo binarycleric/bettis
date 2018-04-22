@@ -37,21 +37,7 @@ pub struct Command {
     value: Vec<DataType>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Available;
-
-    #[test]
-    fn it_parses_command_from_string() {
-        assert_eq!(Ok(Available::Select), Available::from_str("select"));
-        assert_eq!(Ok(Available::Set), Available::from_str("set"));
-        assert_eq!(Ok(Available::Get), Available::from_str("get"));
-    }
-}
-
 impl Command {
-    // TODO: This method is a total mess and I don't trust it at all.
-    // Needs a pretty serious refactor.
     pub fn new(redis_value: DataType) -> Command {
         match redis_value {
             DataType::Array(array) => Command {
@@ -151,5 +137,17 @@ impl Command {
                 Err("Something bad happened")
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Available;
+
+    #[test]
+    fn it_parses_command_from_string() {
+        assert_eq!(Ok(Available::Select), Available::from_str("select"));
+        assert_eq!(Ok(Available::Set), Available::from_str("set"));
+        assert_eq!(Ok(Available::Get), Available::from_str("get"));
     }
 }
