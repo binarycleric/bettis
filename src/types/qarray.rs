@@ -1,6 +1,5 @@
 use types::data_type::DataType;
 use types::QDataType;
-use types::QSimpleString;
 
 #[derive(Debug, Clone)]
 pub struct QArray<T> where T: QDataType + Clone {
@@ -38,16 +37,16 @@ impl<T: QDataType + Clone> QDataType for QArray<T> {
 mod tests {
     use super::QDataType;
     use super::QArray;
-    use super::QSimpleString;
+    use types::QString;
 
     #[test]
     fn it_exports_into_protocol() {
         let bulk_strings = vec![
-            QSimpleString::from_string("Example".to_string()),
-            QSimpleString::from_string("Example".to_string()),
+            QString::from_string("Example"),
+            QString::from_string("Example"),
         ];
 
-        let qarray: QArray<QSimpleString> = QArray::from_vec(bulk_strings);
+        let qarray: QArray<QString> = QArray::from_vec(bulk_strings);
         let protocol = qarray.to_protocol();
 
         assert_eq!("*2\r\n+Example\r\n+Example\r\n", protocol);
