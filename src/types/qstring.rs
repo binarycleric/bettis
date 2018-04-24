@@ -32,13 +32,13 @@ mod tests {
     use super::QString;
 
     #[test]
-    fn it_parses_bulk_string_to_redis_protocol() {
+    fn it_parses_bulk_string_to_protocol_bulk() {
         let redis_type = QString::from_string("Ok");
         assert_eq!("$2\r\nOk\r\n", redis_type.to_protocol_bulk())
     }
 
     #[test]
-    fn it_parses_simple_string_to_redis_protocol() {
+    fn it_parses_simple_string_to_protocol() {
         let redis_type = QString::from_string("Ok");
         assert_eq!("+Ok\r\n", redis_type.to_protocol())
     }

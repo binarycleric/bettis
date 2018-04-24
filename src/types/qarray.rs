@@ -7,12 +7,12 @@ pub struct QArray<T> where T: QDataType + Clone {
 }
 
 impl<T: QDataType + Clone> QArray<T> {
-    pub fn new() -> QArray<T> {
-        QArray { values: Vec::new() }
+    pub fn new() -> Self {
+        Self { values: Vec::new() }
     }
 
-    pub fn from_vec(values: Vec<T>) -> QArray<T> {
-        QArray { values: values }
+    pub fn from_vec(values: Vec<T>) -> Self {
+        Self { values: values }
     }
 }
 
