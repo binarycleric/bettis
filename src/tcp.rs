@@ -9,24 +9,20 @@ use parser::Parser;
 use types::DataType;
 use commands::Command;
 
-pub struct Server<'a> {
+pub struct Listener<'a> {
     ipaddr: &'a str,
     port: &'a str,
 }
 
-impl<'a> Server<'a> {
-    pub fn new(ipaddr: &'a str, port: &'a str) -> Server<'a> {
-        return Server {
-            ipaddr: ipaddr,
-            port: port,
-        };
+impl<'a> Listener<'a> {
+    pub fn new(ipaddr: &'a str, port: &'a str) -> Self {
+        Self { ipaddr: ipaddr, port: port }
     }
 
     pub fn start(&self, data_table: &mut Database) {
         let connection_string = self.ipaddr.to_owned() + ":" + self.port;
-        let listener = TcpListener::bind(connection_string);
 
-        match listener {
+        match TcpListener::bind(connection_string) {
             Ok(listener) => {
                 println!("listening started, ready to accept");
                 self.dispatch(listener, data_table);
@@ -41,7 +37,7 @@ impl<'a> Server<'a> {
             let mut request = RequestHandler::new(&mut stream);
 
             request.run(data_table);
-            println!("data_table --> {:?}", data_table);
+            println!("data_table --> {:#?}", data_table);
         }
     }
 }
@@ -51,8 +47,8 @@ struct RequestHandler<'tcp> {
 }
 
 impl<'tcp> RequestHandler<'tcp> {
-    pub fn new(stream: &'tcp mut TcpStream) -> RequestHandler<'tcp> {
-        RequestHandler { stream: stream }
+    pub fn new(stream: &'tcp mut TcpStream) -> Self {
+        Self { stream: stream }
     }
 
     fn write_error(&mut self) {

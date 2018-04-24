@@ -14,7 +14,7 @@ struct ArrayParser {
 }
 
 impl ArrayParser {
-    fn new(array_data: String) -> Result<ArrayParser, &'static str> {
+    fn new(array_data: String) -> Result<Self, &'static str> {
         let rtype: char = array_data.get(0..1).unwrap().parse().unwrap();
         if rtype != ARRAY_TOKEN {
             return Err("Provided type is not an Array");
@@ -31,7 +31,7 @@ impl ArrayParser {
                 println!("array_size --> {:?}", array_size);
                 println!("values_idx --> {:?}", values_idx);
 
-                Ok(ArrayParser {
+                Ok(Self {
                     array_data: array_data,
                     size: array_size,
                     current_idx: values_idx,
@@ -107,8 +107,8 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(incoming: String) -> Parser {
-        return Parser { incoming: incoming };
+    pub fn new(incoming: String) -> Self {
+        Self { incoming: incoming }
     }
 
     pub fn get_type(&self) -> char {
