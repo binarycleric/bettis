@@ -1,13 +1,13 @@
 extern crate quarrie;
 
 use quarrie::storage::Database;
-use quarrie::types::DataType;
+use quarrie::types::QType;
 
 #[test]
 fn it_sets_and_gets_values() {
     let mut table = Database::new();
-    let value = DataType::Integer(42);
-    let expected = DataType::Integer(42);
+    let value = QType::build_integer(42);
+    let expected = QType::build_integer(42);
 
     table.set("example", value);
     assert_eq!(Some(&expected), table.get("example"));
@@ -16,8 +16,8 @@ fn it_sets_and_gets_values() {
 #[test]
 fn it_returns_set_bulk_string() {
     let mut table = Database::new();
-    let value = DataType::BulkString("test bulk string".to_string());
-    let expected = DataType::BulkString("test bulk string".to_string());
+    let value = QType::build_simple_string("test bulk string");
+    let expected = QType::build_simple_string("test bulk string");
 
     table.set("example", value);
     assert_eq!(Some(&expected), table.get("example"));
@@ -26,8 +26,8 @@ fn it_returns_set_bulk_string() {
 #[test]
 fn it_returns_set_integer() {
     let mut table = Database::new();
-    let value = DataType::SimpleString("test".to_string());
-    let expected = DataType::SimpleString("test".to_string());
+    let value = QType::build_simple_string("test");
+    let expected = QType::build_simple_string("test");
 
     table.set("example", value);
     assert_eq!(Some(&expected), table.get("example"));

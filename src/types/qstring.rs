@@ -1,7 +1,7 @@
 use types::data_type::DataType;
 use types::QDataType;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QString {
     value: String,
     bulk: bool,

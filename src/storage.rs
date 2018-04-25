@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use types::DataType;
+use types::QType;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct DataKey {
@@ -14,7 +14,7 @@ impl DataKey {
 
 #[derive(Debug)]
 pub struct Database {
-    value_map: HashMap<DataKey, DataType>,
+    value_map: HashMap<DataKey, QType>,
 }
 
 impl Database {
@@ -24,17 +24,17 @@ impl Database {
         };
     }
 
-    pub fn set<'kl>(&mut self, key: &'kl str, value: DataType) {
+    pub fn set<'kl>(&mut self, key: &'kl str, value: QType) {
         let data_key = DataKey::new(key.to_string());
         self.value_map.insert(data_key, value);
     }
 
-    pub fn get<'kl>(&self, key: &'kl str) -> Option<&DataType> {
+    pub fn get<'kl>(&self, key: &'kl str) -> Option<&QType> {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.get(&data_key);
     }
 
-    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<DataType> {
+    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<QType> {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.remove(&data_key)
     }
@@ -44,8 +44,8 @@ impl Database {
 
         match self.get(key) {
             Some(value) => {
-                if let DataType::Integer(ival) = *value {
-                    incr_value = ival + 1;
+                if let QType::Integer(ref ival) = *value {
+                    incr_value = ival.value() + 1;
                 } else {
                     panic!("Not sure what's up! {:?}", value);
                 }
@@ -55,7 +55,7 @@ impl Database {
             }
         }
 
-        self.set(key, DataType::Integer(incr_value))
+        self.set(key, QType::from_i64(incr_value))
     }
 
     pub fn decr<'kl>(&mut self, key: &'kl str) {
@@ -63,8 +63,8 @@ impl Database {
 
         match self.get(key) {
             Some(value) => {
-                if let DataType::Integer(ival) = *value {
-                    decr_value = ival - 1;
+                if let QType::Integer(ref ival) = *value {
+                    decr_value = ival.value() - 1;
                 } else {
                     panic!("Not sure what's up! {:?}", value);
                 }
@@ -74,7 +74,7 @@ impl Database {
             }
         }
 
-        self.set(key, DataType::Integer(decr_value))
+        self.set(key, QType::from_i64(decr_value))
 
     }
 }
@@ -82,12 +82,12 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::Database;
-    use types::DataType;
+    use types::QType;
 
     #[test]
     fn it_sets_data_value_key() {
         let mut database = Database::new();
-        let data_type = DataType::SimpleString("Ok".to_string());
+        let data_type = QType::from_string("Ok");
 
         database.set("example", data_type);
     }

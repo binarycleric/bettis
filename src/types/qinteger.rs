@@ -1,12 +1,16 @@
 use types::data_type::DataType;
 use types::QDataType;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QInteger {
     value: i64,
 }
 
 impl QInteger {
+    pub fn value(&self) -> i64 {
+        self.value
+    }
+
     pub fn from_i64(value: i64) -> Self {
         Self { value: value }
     }
