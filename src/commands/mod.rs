@@ -1,6 +1,6 @@
 mod set;
 
-use types::DataType;
+use types::QDataType;
 use storage::Database;
 
 pub use self::set::SetCommand;
@@ -32,114 +32,6 @@ impl Available {
             DECR_COMMAND => Ok(Available::Decr),
             DEL_COMMAND => Ok(Available::Del),
             _ => Err("Invalid redis command"),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Command {
-    value: Vec<DataType>,
-}
-
-impl Command {
-    pub fn new(redis_value: DataType) -> Command {
-        match redis_value {
-            DataType::Array(array) => Command {
-                value: array.to_vec(),
-            },
-            _ => panic!("Improperly formed request."),
-        }
-    }
-
-    fn get_command(&self) -> Available {
-        if let DataType::BulkString(ref value) = self.value[0] {
-            return Available::from_str(value).unwrap();
-        }
-        panic!("Invalid command");
-    }
-
-    pub fn invoke(&self, data_table: &mut Database) -> Result<String, &'static str> {
-        match self.get_command() {
-            Available::Select => {
-                println!("Invoke select...");
-                println!("VALUE --> {:?}", self.value);
-
-                Ok("+OK\r\n".to_string())
-            }
-            Available::Del => {
-                println!("Invoke del...");
-                println!("VALUE --> {:?}", self.value);
-
-                match self.value[1].clone() {
-                    DataType::BulkString(dk) => {
-                        data_table.del(&dk);
-                        Ok("+OK\r\n".to_string())
-                    }
-                    _ => {
-                        println!("Something bad happened: {:?}", self.value);
-                        Err("Something bad happened")
-                    }
-                }
-            },
-            Available::Decr => {
-                println!("Invoke decr...");
-                println!("VALUE --> {:?}", self.value);
-
-                match self.value[1].clone() {
-                    DataType::BulkString(dk) => {
-                        data_table.decr(&dk);
-                        Ok("+OK\r\n".to_string())
-                    }
-                    _ => {
-                        println!("Something bad happened: {:?}", self.value);
-                        Err("Something bad happened")
-                    }
-                }
-            }
-            Available::Incr => {
-                println!("Invoke incr...");
-                println!("VALUE --> {:?}", self.value);
-
-                match self.value[1].clone() {
-                    DataType::BulkString(dk) => {
-                        data_table.incr(&dk);
-                        Ok("+OK\r\n".to_string())
-                    }
-                    _ => {
-                        println!("Something bad happened: {:?}", self.value);
-                        Err("Something bad happened")
-                    }
-                }
-            }
-            Available::Set => {
-                println!("Invoke set...");
-                println!("VALUE --> {:?}", self.value);
-
-                match self.value[1].clone() {
-                    DataType::BulkString(dk) => {
-                        data_table.set(&dk, self.value[2].clone());
-
-                        Ok("+OK\r\n".to_string())
-                    }
-                    _ => {
-                        println!("Something bad happened: {:?}", self.value);
-                        Err("Something bad happened")
-                    }
-                }
-            }
-            Available::Get => {
-                println!("Invoke get ...");
-                println!("VALUE --> {:?}", self.value);
-
-                if let DataType::BulkString(dk) = self.value[1].clone() {
-                    match data_table.get(&dk) {
-                        Some(value) => return Ok(value.to_protocol()),
-                        None => return Err("-MalformedValue\r\n"),
-                    }
-                }
-                println!("Something bad happened: {:?}", self.value);
-                Err("Something bad happened")
-            }
         }
     }
 }

@@ -1,4 +1,3 @@
-use types::data_type::DataType;
 use types::QDataType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,10 +16,6 @@ impl QInteger {
 }
 
 impl QDataType for QInteger {
-    fn to_data_type(&self) -> DataType {
-        DataType::Integer(self.value)
-    }
-
     fn to_protocol(&self) -> String {
         format!(":{}\r\n", self.value)
     }

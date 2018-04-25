@@ -1,4 +1,3 @@
-use types::data_type::DataType;
 use types::QDataType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,12 +16,6 @@ impl<T: QDataType + Clone> QArray<T> {
 }
 
 impl<T: QDataType + Clone> QDataType for QArray<T> {
-    fn to_data_type(&self) -> DataType {
-        let vec_values = Vec::new();
-
-        DataType::Array(vec_values)
-    }
-
     fn to_protocol(&self) -> String {
         let mut retval = format!("*{}\r\n", self.values.len());
 

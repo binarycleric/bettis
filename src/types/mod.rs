@@ -1,24 +1,32 @@
-mod data_type;
 mod qstring;
 mod qinteger;
 mod qarray;
 
-pub use self::data_type::DataType;
 pub use self::qarray::QArray;
 pub use self::qstring::QString;
 pub use self::qinteger::QInteger;
 
 pub trait QDataType {
-    fn to_data_type(&self) -> DataType;
     fn to_protocol(&self) -> String;
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum QType {
     SimpleString(QString),
     BulkString(QString),
     Integer(QInteger),
-    Array(QArray<QString>)
+    Array(QArray<QType>)
+}
+
+impl QDataType for QType {
+    fn to_protocol(&self) -> String {
+        match self {
+            &QType::SimpleString(ref x) => x.to_protocol(),
+            &QType::BulkString(ref x) => x.to_protocol(),
+            &QType::Integer(ref x) => x.to_protocol(),
+            &QType::Array(ref x) => x.to_protocol(),
+        }
+    }
 }
 
 impl QType {
@@ -46,15 +54,6 @@ impl QType {
         match self {
             &QType::Integer(ref int) => Ok(int.value()),
             _ =>  Err("Not an integer"),
-        }
-    }
-
-    pub fn to_protocol(&self) -> String {
-        match self {
-            &QType::SimpleString(ref x) => x.to_protocol(),
-            &QType::BulkString(ref x) => x.to_protocol(),
-            &QType::Integer(ref x) => x.to_protocol(),
-            &QType::Array(ref x) => x.to_protocol(),
         }
     }
 }

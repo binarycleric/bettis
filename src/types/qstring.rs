@@ -1,4 +1,3 @@
-use types::data_type::DataType;
 use types::QDataType;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,10 +17,6 @@ impl QString {
 }
 
 impl QDataType for QString {
-    fn to_data_type(&self) -> DataType {
-        DataType::BulkString(self.value.to_string())
-    }
-
     fn to_protocol(&self) -> String {
         if self.bulk {
             format!("${}\r\n{}\r\n", self.value.len(), self.value)

@@ -1,10 +1,15 @@
 pub mod tcp;
 pub mod storage;
 pub mod commands;
-pub mod parser;
 pub mod types;
 
 const REDIS_SEPARATOR: &'static str = "\r\n";
+
+const BULK_STRING_TOKEN: char = '$';
+const SIMPLE_STRING_TOKEN: char = '+';
+const INTEGER_TOKEN: char = ':';
+const ARRAY_TOKEN: char = '*';
+const ERROR_TOKEN: char = '-';
 
 // TODO: Redis protocol parser.
 // https://redis.io/topics/protocol

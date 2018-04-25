@@ -5,9 +5,6 @@ use std::net::TcpListener;
 use std::net::TcpStream;
 
 use storage::Database;
-use parser::Parser;
-use types::DataType;
-use commands::Command;
 
 pub struct Listener<'a> {
     ipaddr: &'a str,
@@ -60,15 +57,6 @@ impl<'tcp> RequestHandler<'tcp> {
         self.stream.flush().unwrap();
     }
 
-    // TODO error handling for invalid types.
-    fn parse_to_value(&self, request: Vec<u8>) -> DataType {
-        let request_string = String::from_utf8(request).unwrap();
-        let parser = Parser::new(request_string);
-        let redis_value = parser.to_data_type().unwrap();
-
-        return redis_value;
-    }
-
     pub fn run(&mut self, data_table: &mut Database) {
         let mut buffer = vec![0; 128];
         let payload_size = self.stream.read(&mut buffer).unwrap();
@@ -78,9 +66,17 @@ impl<'tcp> RequestHandler<'tcp> {
         }
 
         let request = buffer[0..payload_size].to_vec();
-        let redis_value = self.parse_to_value(request);
-        let command = Command::new(redis_value);
+        let request_string = String::from_utf8(request).unwrap();
 
+        // "*2\r\n$3\r\nget\r\n$9\r\nincr-test\r\n"
+
+        println!("request --> {:#?}\n\n", request_string);
+        // let command = Command::new(redis_value);
+
+        self.write_response("+OK\r\n".to_string());
+        self.run(data_table);
+
+/*
         match command.invoke(data_table) {
             Ok(response) => {
                 self.write_response(response);
@@ -90,5 +86,6 @@ impl<'tcp> RequestHandler<'tcp> {
                 self.write_error();
             }
         }
+*/
     }
 }
