@@ -13,8 +13,10 @@ pub trait QDataType {
     fn to_protocol(&self) -> String;
 }
 
-enum ValidTypes {
-    SimpleString,
-    Integer,
-    Array
+#[derive(Debug)]
+pub enum QType {
+    SimpleString(QString),
+    BulkString(QString),
+    Integer(QInteger),
+    Array(Vec<QType>)
 }

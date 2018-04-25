@@ -6,9 +6,7 @@ pub enum DataType {
     Array(Vec<DataType>),
 }
 
-use types::QDataType;
-use types::QString;
-use types::QInteger;
+use types::{QDataType, QString, QInteger};
 
 impl DataType {
     pub fn to_redis_protocol<'p>(&self) -> String {
@@ -17,7 +15,7 @@ impl DataType {
                 QString::from_string(x).to_protocol()
             }
             DataType::BulkString(ref x) => {
-                QString::from_string(x).to_protocol_bulk()
+                QString::from_string(x).to_protocol()
             }
             DataType::Integer(ref x) => {
                 QInteger::from_i64(*x).to_protocol()
