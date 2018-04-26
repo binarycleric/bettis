@@ -47,3 +47,21 @@ mod tests {
         assert_eq!(Ok(Available::Get), Available::from_str("get"));
     }
 }
+
+
+
+pub enum Command {
+    Select(String),
+    Set(String),
+}
+
+impl Command {
+    pub fn build(request: String) -> Command {
+        Command::Set(request)
+    }
+
+    pub fn invoke(&self, data_table: &mut Database) -> Result<String, String> {
+        // Err(":1\r\n".to_string())
+        Ok("+OK\r\n".to_string())
+    }
+}
