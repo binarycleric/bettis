@@ -3,7 +3,7 @@ pub mod storage;
 pub mod commands;
 pub mod types;
 
-const REDIS_SEPARATOR: &'static str = "\r\n";
+const REQUEST_SEPARATOR: &'static str = "\r\n";
 
 const BULK_STRING_TOKEN: char = '$';
 const SIMPLE_STRING_TOKEN: char = '+';

@@ -1,8 +1,9 @@
 use std::str;
-use std::io::Write;
-use std::io::Read;
 use std::net::TcpListener;
 use std::net::TcpStream;
+use std::io::prelude::*;
+use std::io::Write;
+use std::io::BufReader;
 
 use storage::Database;
 use commands::Command;
@@ -18,47 +19,26 @@ impl<'a> Listener<'a> {
     }
 
     pub fn start(&self, data_table: &mut Database) {
-        let connection_string = self.ipaddr.to_owned() + ":" + self.port;
-
-        match TcpListener::bind(connection_string) {
-            Ok(listener) => {
-                println!("listening started, ready to accept");
-
-                for stream in listener.incoming() {
-                    let mut stream = stream.unwrap();
-                    let mut request = Request::new(&mut stream);
-
-                    request.run(data_table);
-                    println!("data_table --> {:#?}", data_table);
-                }
-            }
+        match TcpListener::bind(self.connection_string()) {
+            Ok(listener) => self.handle_incoming(listener, data_table),
             Err(err) => println!("{:?}", err),
         }
     }
-}
 
-struct CommandIterator<'s> {
-    stream: &'s TcpStream,
-}
+    fn connection_string(&self) -> String {
+        format!("{}:{}", self.ipaddr, self.port)
+    }
 
-impl<'s> Iterator for CommandIterator<'s> {
-    type Item = Command;
+    fn handle_incoming(&self, listener: TcpListener, data_table: &mut Database) {
+        println!("listening started, ready to accept");
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut buffer = vec![0; 128];
-        let payload_size = self.stream.read(&mut buffer).unwrap();
+        for stream in listener.incoming() {
+            let mut stream = stream.unwrap();
+            let mut request = Request::new(&mut stream);
 
-        if payload_size == 0 {
-            return None
+            request.run(data_table);
+            println!("data_table --> {:#?}", data_table);
         }
-
-        let request = buffer[0..payload_size].to_vec();
-        let request_string = String::from_utf8(request).unwrap();
-        println!("request --> {:#?}\n\n", request_string);
-        // "*2\r\n$3\r\nget\r\n$9\r\nincr-test\r\n"
-        let command = Command::build(request_string);
-
-        return Some(command);
     }
 }
 
@@ -72,14 +52,22 @@ impl<'tcp> Request<'tcp> {
     }
 
     pub fn run(&mut self, data_table: &mut Database) {
-        let command_iter = CommandIterator { stream: self.stream };
+        loop {
+            let mut buffer = vec![0; 128];
+            let payload_size = self.stream.read(&mut buffer).unwrap();
 
-        for command in command_iter {
+            if payload_size == 0 {
+                return;
+            }
+
+            let request = &buffer[0..payload_size];
+            let reader = BufReader::new(request);
+            let command = Command::build(reader);
+
             match command.invoke(data_table) {
-                Ok(response) => {
-                    self.write_response(response);
-                }
+                Ok(response) => self.write_response(response),
                 Err(error) => {
+                    println!("{:?}", error);
                     self.write_response(error);
                 }
             }

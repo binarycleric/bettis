@@ -1,4 +1,14 @@
 [[package]]
 name = "quarrie"
 version = "0.1.0"
+dependencies = [
+ "resp 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
+[[package]]
+name = "resp"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum resp 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7ce95c368eb562d084ac9ee4dc1506a0b83a248df4afaed4b3779013b49d88ea"
