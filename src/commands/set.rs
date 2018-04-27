@@ -16,9 +16,9 @@ impl SetCommand {
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
-        println!("Invoke set...");
-        println!("KEY --> {:?}", self.key);
-        println!("VALUE --> {:?}", self.value);
+        debug!("Invoke set...");
+        debug!("KEY --> {:?}", self.key);
+        debug!("VALUE --> {:?}", self.value);
 
         if let resp::Value::Bulk(ref key) = self.key {
             data_table.set(&key, self.value.clone());

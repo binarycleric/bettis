@@ -12,8 +12,8 @@ impl DecrCommand {
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
-        println!("Invoke Decr...");
-        println!("KEY --> {:?}", self.key);
+        debug!("Invoke Decr...");
+        debug!("KEY --> {:?}", self.key);
 
         if let resp::Value::Bulk(ref key) = self.key {
             data_table.decr(&key)

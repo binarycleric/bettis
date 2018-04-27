@@ -12,8 +12,8 @@ impl IncrCommand {
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
-        println!("Invoke Incr...");
-        println!("KEY --> {:?}", self.key);
+        debug!("Invoke Incr...");
+        debug!("KEY --> {:?}", self.key);
 
         if let resp::Value::Bulk(ref key) = self.key {
             data_table.incr(&key)
