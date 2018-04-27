@@ -1,3 +1,5 @@
+extern crate resp;
+
 use std::str;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -7,6 +9,8 @@ use std::io::BufReader;
 
 use storage::Database;
 use commands::Command;
+
+use self::resp::{Value};
 
 pub struct Listener<'a> {
     ipaddr: &'a str,
@@ -74,8 +78,8 @@ impl<'tcp> Request<'tcp> {
         }
     }
 
-    fn write_response(&mut self, response: String) {
-        self.stream.write(response.as_bytes()).unwrap();
+    fn write_response(&mut self, response: resp::Value) {
+        self.stream.write(&response.encode()).unwrap();
         self.stream.flush().unwrap();
     }
 }

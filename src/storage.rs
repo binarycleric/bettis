@@ -1,5 +1,6 @@
+extern crate resp;
+
 use std::collections::HashMap;
-use types::QType;
 
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct DataKey {
@@ -14,7 +15,7 @@ impl DataKey {
 
 #[derive(Debug)]
 pub struct Database {
-    value_map: HashMap<DataKey, QType>,
+    value_map: HashMap<DataKey, resp::Value>,
 }
 
 impl Database {
@@ -24,58 +25,19 @@ impl Database {
         };
     }
 
-    pub fn set<'kl>(&mut self, key: &'kl str, value: QType) {
+    pub fn set<'kl>(&mut self, key: &'kl str, value: resp::Value) {
         let data_key = DataKey::new(key.to_string());
         self.value_map.insert(data_key, value);
     }
 
-    pub fn get<'kl>(&self, key: &'kl str) -> Option<&QType> {
+    pub fn get<'kl>(&self, key: &'kl str) -> Option<&resp::Value> {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.get(&data_key);
     }
 
-    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<QType> {
+    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.remove(&data_key)
-    }
-
-    pub fn incr<'kl>(&mut self, key: &'kl str) {
-        let incr_value: i64;
-
-        match self.get(key) {
-            Some(value) => {
-                if let QType::Integer(ref ival) = *value {
-                    incr_value = ival.value() + 1;
-                } else {
-                    panic!("Not sure what's up! {:?}", value);
-                }
-            }
-            None => {
-                incr_value = 1;
-            }
-        }
-
-        self.set(key, QType::from_i64(incr_value))
-    }
-
-    pub fn decr<'kl>(&mut self, key: &'kl str) {
-        let decr_value: i64;
-
-        match self.get(key) {
-            Some(value) => {
-                if let QType::Integer(ref ival) = *value {
-                    decr_value = ival.value() - 1;
-                } else {
-                    panic!("Not sure what's up! {:?}", value);
-                }
-            }
-            None => {
-                decr_value = 0;
-            }
-        }
-
-        self.set(key, QType::from_i64(decr_value))
-
     }
 }
 

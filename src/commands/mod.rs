@@ -1,10 +1,12 @@
 mod set;
+mod select;
+mod get;
 
-use types::QDataType;
-use types::QType;
 use storage::Database;
 
-pub use self::set::SetCommand;
+use self::set::SetCommand;
+use self::select::SelectCommand;
+use self::get::GetCommand;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -52,7 +54,6 @@ mod tests {
 
 extern crate resp;
 
-use std::io::prelude::*;
 use std::io::BufReader;
 use self::resp::{Decoder, Value};
 
@@ -72,10 +73,36 @@ impl Command {
         Self { values: values }
     }
 
-    pub fn invoke(&self, data_table: &mut Database) -> Result<String, String> {
-        println!("{:?}", self.values);
+    pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+        if let Value::Array(ref array) = self.values {
+            if let Value::Bulk(ref command_name) = array[0] {
+                match command_name.as_str() {
+                    SELECT_COMMAND => {
+                        let database_id = array[1].clone();
+                        let command = SelectCommand::new(database_id);
+                        return command.invoke(data_table);
+                    }
+                    SET_COMMAND => {
+                        let set_key = array[1].clone();
+                        let set_value = array[2].clone();
+                        let command = SetCommand::new(set_key, set_value);
+                        return command.invoke(data_table);
+                    }
+                    GET_COMMAND => {
+                        let set_key = array[1].clone();
+                        let command = GetCommand::new(set_key);
+                        return command.invoke(data_table);
+                    }
+                    x => {
+                        println!("Nope -- {:?}", x);
+                        return Ok(resp::Value::String("OK".to_string()));
+                    }
+                }
+            }
+        }
 
+        panic!("Unknown!")
         // Err(":1\r\n".to_string())
-        Ok("+OK\r\n".to_string())
+        // Ok("+OK\r\n".to_string())
     }
 }
