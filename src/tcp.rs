@@ -10,8 +10,6 @@ use std::io::BufReader;
 use storage::Database;
 use commands::Command;
 
-use self::resp::Value;
-
 pub struct Listener<'a> {
     ipaddr: &'a str,
     port: &'a str,
