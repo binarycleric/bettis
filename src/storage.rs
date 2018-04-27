@@ -39,4 +39,45 @@ impl Database {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.remove(&data_key);
     }
+
+    // TODO: I hate this method and its return values.
+    pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
+        let mut new_value: i64 = 1;
+
+        match self.get(key) {
+            Some(value) => {
+                if let &resp::Value::Integer(ref int) = value {
+                    new_value = int.clone() + 1;
+                } else {
+                    let message = "ERR value is not an integer or out of range";
+                    return Err(resp::Value::Error(message.to_string()));
+                }
+            }
+            None => {},
+        }
+
+        self.set(key, resp::Value::Integer(new_value));
+        Ok(resp::Value::Integer(new_value))
+    }
+
+    // TODO: I hate this method and its return values.
+    pub fn decr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
+        let mut new_value: i64 = 0;
+
+        match self.get(key) {
+            Some(value) => {
+                if let &resp::Value::Integer(ref int) = value {
+                    new_value = int.clone() - 1;
+                } else {
+                    let message = "ERR value is not an integer or out of range";
+                    return Err(resp::Value::Error(message.to_string()));
+                }
+            }
+            None => {},
+        }
+
+        self.set(key, resp::Value::Integer(new_value));
+        Ok(resp::Value::Integer(new_value))
+    }
+
 }

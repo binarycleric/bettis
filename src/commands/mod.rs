@@ -7,6 +7,8 @@ mod set;
 mod select;
 mod get;
 mod del;
+mod incr;
+mod decr;
 
 use storage::Database;
 
@@ -14,6 +16,8 @@ use self::set::SetCommand;
 use self::select::SelectCommand;
 use self::get::GetCommand;
 use self::del::DelCommand;
+use self::incr::IncrCommand;
+use self::decr::DecrCommand;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -65,6 +69,16 @@ impl Command {
                     DEL_COMMAND => {
                         let set_key = array[1].clone();
                         let command = DelCommand::new(set_key);
+                        command.invoke(data_table)
+                    }
+                    INCR_COMMAND => {
+                        let set_key = array[1].clone();
+                        let command = IncrCommand::new(set_key);
+                        command.invoke(data_table)
+                    }
+                    DECR_COMMAND => {
+                        let set_key = array[1].clone();
+                        let command = DecrCommand::new(set_key);
                         command.invoke(data_table)
                     }
                     x => {

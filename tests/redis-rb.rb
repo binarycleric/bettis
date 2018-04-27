@@ -21,13 +21,13 @@ end
 
 @redis.del("incr-test")
 @redis.del("decr-test")
-#
-# puts "Running Reddis tests\n\n"
-# incr_tests
-# decr_tests
+
+puts "Running Reddis tests\n\n"
+incr_tests
+decr_tests
 
 
-
+__END__
 
 @redis.set("test", 23)
 puts "test key"
