@@ -20,7 +20,9 @@ pub struct Database {
 
 impl Database {
     pub fn new() -> Self {
-        Self { value_map: HashMap::new() }
+        Self {
+            value_map: HashMap::new(),
+        }
     }
 
     pub fn set<'kl>(&mut self, key: &'kl str, value: resp::Value) {
@@ -35,6 +37,6 @@ impl Database {
 
     pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
         let data_key = DataKey::new(key.to_string());
-        return self.value_map.remove(&data_key)
+        return self.value_map.remove(&data_key);
     }
 }

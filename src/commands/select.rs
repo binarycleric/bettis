@@ -7,9 +7,8 @@ pub struct SelectCommand {
 }
 
 impl SelectCommand {
-
     pub fn new(database: resp::Value) -> Self {
-         Self { database: database }
+        Self { database: database }
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {

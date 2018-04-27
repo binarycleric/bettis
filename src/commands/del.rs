@@ -8,7 +8,7 @@ pub struct DelCommand {
 
 impl DelCommand {
     pub fn new(key: resp::Value) -> Self {
-         Self { key: key }
+        Self { key: key }
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {

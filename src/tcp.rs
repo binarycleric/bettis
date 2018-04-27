@@ -10,7 +10,7 @@ use std::io::BufReader;
 use storage::Database;
 use commands::Command;
 
-use self::resp::{Value};
+use self::resp::Value;
 
 pub struct Listener<'a> {
     ipaddr: &'a str,
@@ -19,7 +19,10 @@ pub struct Listener<'a> {
 
 impl<'a> Listener<'a> {
     pub fn new(ipaddr: &'a str, port: &'a str) -> Self {
-        Self { ipaddr: ipaddr, port: port }
+        Self {
+            ipaddr: ipaddr,
+            port: port,
+        }
     }
 
     pub fn start(&self, data_table: &mut Database) {

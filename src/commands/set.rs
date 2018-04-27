@@ -9,7 +9,10 @@ pub struct SetCommand {
 
 impl SetCommand {
     pub fn new(key: resp::Value, value: resp::Value) -> Self {
-         Self { key: key, value: value }
+        Self {
+            key: key,
+            value: value,
+        }
     }
 
     pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
