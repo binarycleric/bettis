@@ -53,7 +53,7 @@ impl Database {
                     return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
-            None => {},
+            None => {}
         }
 
         self.set(key, resp::Value::Integer(new_value));
@@ -71,11 +71,10 @@ impl Database {
                     return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
-            None => {},
+            None => {}
         }
 
         self.set(key, resp::Value::Integer(new_value));
         Ok(resp::Value::Integer(new_value))
     }
-
 }
