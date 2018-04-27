@@ -34,12 +34,12 @@ impl Database {
 
     pub fn get<'kl>(&self, key: &'kl str) -> Option<&resp::Value> {
         let data_key = DataKey::new(key.to_string());
-        return self.value_map.get(&data_key);
+        self.value_map.get(&data_key)
     }
 
     pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
         let data_key = DataKey::new(key.to_string());
-        return self.value_map.remove(&data_key);
+        self.value_map.remove(&data_key)
     }
 
     pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
