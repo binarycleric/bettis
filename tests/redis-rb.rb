@@ -1,8 +1,7 @@
 require "redis"
 require "pry"
 require "pp"
-
-
+require "benchmark"
 
 def incr_tests
   25.times { @redis.incr("incr-test") }
@@ -19,12 +18,15 @@ end
 
 @redis = Redis.new(host: "127.0.0.1", port: 6379, db: 15)
 
-@redis.del("incr-test")
-@redis.del("decr-test")
+time = Benchmark.realtime do
+  @redis.del("incr-test")
+  @redis.del("decr-test")
 
-puts "Running Reddis tests\n\n"
-incr_tests
-decr_tests
+  puts "Running Reddis tests\n\n"
+  incr_tests
+  decr_tests
+end
+puts "Total time: #{time}"
 
 
 __END__
