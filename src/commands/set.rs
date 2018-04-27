@@ -8,7 +8,6 @@ pub struct SetCommand {
 }
 
 impl SetCommand {
-
     pub fn new(key: resp::Value, value: resp::Value) -> Self {
          Self { key: key, value: value }
     }
@@ -20,9 +19,9 @@ impl SetCommand {
 
         if let resp::Value::Bulk(ref key) = self.key {
             data_table.set(&key, self.value.clone());
-            Ok(resp::Value::String("OK".to_string()))
+            Ok(super::ok_response())
         } else {
-            Err(resp::Value::Error("1".to_string()))
+            Err(super::error_response())
         }
     }
 }

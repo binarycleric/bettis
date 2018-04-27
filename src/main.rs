@@ -1,7 +1,4 @@
 extern crate quarrie;
-extern crate resp;
-
-use resp::{Value, encode, encode_slice, Decoder};
 
 use quarrie::tcp::Listener;
 use quarrie::storage::Database;

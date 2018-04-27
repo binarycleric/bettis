@@ -19,10 +19,8 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn new() -> Database {
-        return Database {
-            value_map: HashMap::new(),
-        };
+    pub fn new() -> Self {
+        Self { value_map: HashMap::new() }
     }
 
     pub fn set<'kl>(&mut self, key: &'kl str, value: resp::Value) {
@@ -38,19 +36,5 @@ impl Database {
     pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
         let data_key = DataKey::new(key.to_string());
         return self.value_map.remove(&data_key)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Database;
-    use types::QType;
-
-    #[test]
-    fn it_sets_data_value_key() {
-        let mut database = Database::new();
-        let data_type = QType::from_string("Ok");
-
-        database.set("example", data_type);
     }
 }

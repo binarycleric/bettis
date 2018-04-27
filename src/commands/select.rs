@@ -17,6 +17,6 @@ impl SelectCommand {
         println!("VALUE --> {:?}", self.database);
 
         // data_table.set(&self.key, self.value);
-        Ok(resp::Value::String("OK".to_string()))
+        Ok(super::ok_response())
     }
 }

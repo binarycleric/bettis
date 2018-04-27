@@ -6,12 +6,14 @@ use self::resp::{Decoder, Value};
 mod set;
 mod select;
 mod get;
+mod del;
 
 use storage::Database;
 
 use self::set::SetCommand;
 use self::select::SelectCommand;
 use self::get::GetCommand;
+use self::del::DelCommand;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";
@@ -20,6 +22,13 @@ const INCR_COMMAND: &'static str = "incr";
 const DECR_COMMAND: &'static str = "decr";
 const DEL_COMMAND: &'static str = "del";
 
+pub fn ok_response() -> resp::Value {
+    resp::Value::String("OK".to_string())
+}
+
+pub fn error_response() -> resp::Value {
+    resp::Value::Error("1".to_string())
+}
 
 #[derive(Debug)]
 pub struct Command {
@@ -27,13 +36,9 @@ pub struct Command {
 }
 
 impl Command {
-
-    // "*2\r\n$3\r\nget\r\n$9\r\nincr-test\r\n"
-    // println!("request --> {:#?}\n\n", request_string);
     pub fn build(reader: BufReader<&[u8]>) -> Self {
         let mut decoder = Decoder::new(reader);
         let values = decoder.decode().unwrap();
-
         Self { values: values }
     }
 
@@ -55,6 +60,11 @@ impl Command {
                     GET_COMMAND => {
                         let set_key = array[1].clone();
                         let command = GetCommand::new(set_key);
+                        command.invoke(data_table)
+                    }
+                    DEL_COMMAND => {
+                        let set_key = array[1].clone();
+                        let command = DelCommand::new(set_key);
                         command.invoke(data_table)
                     }
                     x => {
