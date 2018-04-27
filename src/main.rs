@@ -1,7 +1,7 @@
-extern crate quarrie;
+extern crate bettis;
 
-use quarrie::tcp::Listener;
-use quarrie::storage::Database;
+use bettis::tcp::Listener;
+use bettis::storage::Database;
 
 fn main() {
     let mut data_table = Database::new();

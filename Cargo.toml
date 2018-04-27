@@ -1,7 +1,7 @@
 [package]
-name = "quarrie"
+name = "bettis"
 version = "0.1.0"
-authors = ["jon"]
+authors = ["Jon Daniel"]
 
 [dependencies]
 resp = "1.0.2"
