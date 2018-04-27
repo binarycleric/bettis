@@ -1,6 +1,7 @@
 extern crate resp;
 
 use storage::Database;
+use command::Command;
 
 pub struct SetCommand {
     key: resp::Value,
@@ -14,8 +15,10 @@ impl SetCommand {
             value: value,
         }
     }
+}
 
-    pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+impl Command for SetCommand {
+    fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke set...");
         debug!("KEY --> {:?}", self.key);
         debug!("VALUE --> {:?}", self.value);

@@ -1,22 +1,26 @@
 extern crate resp;
 
 use storage::Database;
+use command::Command;
 
-pub struct IncrCommand {
+pub struct DelCommand {
     key: resp::Value,
 }
 
-impl IncrCommand {
+impl DelCommand {
     pub fn new(key: resp::Value) -> Self {
         Self { key: key }
     }
+}
 
-    pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Incr...");
+impl Command for DelCommand {
+    fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+        debug!("Invoke Del...");
         debug!("KEY --> {:?}", self.key);
 
         if let resp::Value::Bulk(ref key) = self.key {
-            data_table.incr(&key)
+            data_table.del(&key);
+            Ok(super::ok_response())
         } else {
             Err(super::error_response())
         }

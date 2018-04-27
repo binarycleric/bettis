@@ -1,6 +1,7 @@
 extern crate resp;
 
 use storage::Database;
+use command::Command;
 
 pub struct DecrCommand {
     key: resp::Value,
@@ -10,8 +11,10 @@ impl DecrCommand {
     pub fn new(key: resp::Value) -> Self {
         Self { key: key }
     }
+}
 
-    pub fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+impl Command for DecrCommand {
+    fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke Decr...");
         debug!("KEY --> {:?}", self.key);
 

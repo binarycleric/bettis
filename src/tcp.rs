@@ -8,7 +8,7 @@ use std::io::Write;
 use std::io::BufReader;
 
 use storage::Database;
-use commands::Command;
+use command::run as run_command;
 
 pub struct Listener<'a> {
     ipaddr: &'a str,
@@ -67,9 +67,8 @@ impl<'tcp> Request<'tcp> {
 
             let request = &buffer[0..payload_size];
             let reader = BufReader::new(request);
-            let command = Command::build(reader);
 
-            match command.invoke(data_table) {
+            match run_command(reader, data_table) {
                 Ok(response) => self.write_response(response),
                 Err(error) => {
                     println!("{:?}", error);
