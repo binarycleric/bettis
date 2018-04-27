@@ -1,3 +1,8 @@
+extern crate resp;
+
+use std::io::BufReader;
+use self::resp::{Decoder, Value};
+
 mod set;
 mod select;
 mod get;
@@ -15,47 +20,6 @@ const INCR_COMMAND: &'static str = "incr";
 const DECR_COMMAND: &'static str = "decr";
 const DEL_COMMAND: &'static str = "del";
 
-#[derive(Debug, PartialEq)]
-enum Available {
-    Select,
-    Set,
-    Get,
-    Incr,
-    Decr,
-    Del,
-}
-
-impl Available {
-    fn from_str<'a>(command: &'a str) -> Result<Available, &'static str> {
-        match command {
-            SELECT_COMMAND => Ok(Available::Select),
-            SET_COMMAND => Ok(Available::Set),
-            GET_COMMAND => Ok(Available::Get),
-            INCR_COMMAND => Ok(Available::Incr),
-            DECR_COMMAND => Ok(Available::Decr),
-            DEL_COMMAND => Ok(Available::Del),
-            _ => Err("Invalid redis command"),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Available;
-
-    #[test]
-    fn it_parses_command_from_string() {
-        assert_eq!(Ok(Available::Select), Available::from_str("select"));
-        assert_eq!(Ok(Available::Set), Available::from_str("set"));
-        assert_eq!(Ok(Available::Get), Available::from_str("get"));
-    }
-}
-
-
-extern crate resp;
-
-use std::io::BufReader;
-use self::resp::{Decoder, Value};
 
 #[derive(Debug)]
 pub struct Command {
@@ -80,29 +44,29 @@ impl Command {
                     SELECT_COMMAND => {
                         let database_id = array[1].clone();
                         let command = SelectCommand::new(database_id);
-                        return command.invoke(data_table);
+                        command.invoke(data_table)
                     }
                     SET_COMMAND => {
                         let set_key = array[1].clone();
                         let set_value = array[2].clone();
                         let command = SetCommand::new(set_key, set_value);
-                        return command.invoke(data_table);
+                        command.invoke(data_table)
                     }
                     GET_COMMAND => {
                         let set_key = array[1].clone();
                         let command = GetCommand::new(set_key);
-                        return command.invoke(data_table);
+                        command.invoke(data_table)
                     }
                     x => {
                         println!("Nope -- {:?}", x);
-                        return Ok(resp::Value::String("OK".to_string()));
+                        Ok(resp::Value::String("OK".to_string()))
                     }
                 }
+            } else {
+                Err(resp::Value::Error("1".to_string()))
             }
+        } else {
+            Err(resp::Value::Error("1".to_string()))
         }
-
-        panic!("Unknown!")
-        // Err(":1\r\n".to_string())
-        // Ok("+OK\r\n".to_string())
     }
 }
