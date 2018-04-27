@@ -87,10 +87,10 @@ impl Command {
                     }
                 }
             } else {
-                Err(resp::Value::Error("1".to_string()))
+                Err(error_response())
             }
         } else {
-            Err(resp::Value::Error("1".to_string()))
+            Err(error_response())
         }
     }
 }
