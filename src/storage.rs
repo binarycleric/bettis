@@ -2,6 +2,8 @@ extern crate resp;
 
 use std::collections::HashMap;
 
+const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
+
 #[derive(Debug, Hash, PartialEq, Eq)]
 pub struct DataKey {
     key: String,
@@ -40,7 +42,6 @@ impl Database {
         return self.value_map.remove(&data_key);
     }
 
-    // TODO: I hate this method and its return values.
     pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
         let mut new_value: i64 = 1;
 
@@ -49,8 +50,7 @@ impl Database {
                 if let &resp::Value::Integer(ref int) = value {
                     new_value = int.clone() + 1;
                 } else {
-                    let message = "ERR value is not an integer or out of range";
-                    return Err(resp::Value::Error(message.to_string()));
+                    return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
             None => {},
@@ -60,7 +60,6 @@ impl Database {
         Ok(resp::Value::Integer(new_value))
     }
 
-    // TODO: I hate this method and its return values.
     pub fn decr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
         let mut new_value: i64 = 0;
 
@@ -69,8 +68,7 @@ impl Database {
                 if let &resp::Value::Integer(ref int) = value {
                     new_value = int.clone() - 1;
                 } else {
-                    let message = "ERR value is not an integer or out of range";
-                    return Err(resp::Value::Error(message.to_string()));
+                    return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
             None => {},

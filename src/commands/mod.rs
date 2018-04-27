@@ -83,7 +83,7 @@ impl Command {
                     }
                     x => {
                         println!("Nope -- {:?}", x);
-                        Ok(resp::Value::String("OK".to_string()))
+                        Err(resp::Value::Error("1".to_string()))
                     }
                 }
             } else {
