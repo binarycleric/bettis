@@ -35,14 +35,14 @@ impl<'a> Listener<'a> {
     }
 
     fn handle_incoming(&self, listener: TcpListener, data_table: &mut Database) {
-        println!("listening started, ready to accept");
+        info!("listening started, ready to accept");
 
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let mut request = Request::new(&mut stream);
 
             request.run(data_table);
-            println!("data_table --> {:#?}", data_table);
+            debug!("data_table --> {:#?}", data_table);
         }
     }
 }
