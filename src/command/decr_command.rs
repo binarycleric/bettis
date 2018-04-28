@@ -43,4 +43,19 @@ mod tests {
 
         assert_eq!(*actual, expected);
     }
+
+    #[test]
+    fn it_creates_value_if_does_not_exist() {
+        let mut database = Database::new();
+        let values = vec![
+            Value::Bulk("test_key".to_string()),
+        ];
+
+        let command = DecrCommand::new(values);
+        let _ = command.invoke(&mut database);
+        let expected = Value::Integer(-1);
+        let actual = database.get("test_key").unwrap();
+
+        assert_eq!(*actual, expected);
+    }
 }

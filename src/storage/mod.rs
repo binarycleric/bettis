@@ -61,7 +61,7 @@ impl Database {
     }
 
     pub fn decr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
-        let mut new_value: i64 = 0;
+        let mut new_value: i64;
 
         match self.get(key) {
             Some(value) => {
@@ -71,7 +71,9 @@ impl Database {
                     return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
-            None => {}
+            None => {
+                new_value = -1;
+            }
         }
 
         self.set(key, resp::Value::Integer(new_value));
