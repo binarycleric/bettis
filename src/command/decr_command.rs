@@ -24,23 +24,20 @@ impl Command<DecrCommand> for DecrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::Command;
-    use super::DecrCommand;
-    use super::Database;
+    use super::{Command, DecrCommand, Database};
     use super::resp::Value;
 
     #[test]
     fn it_decrements_provided_value() {
         let mut database = Database::new();
         let values = vec![
-            Value::Bulk("decr".to_string()),
             Value::Bulk("test_key".to_string()),
         ];
-        let command = DecrCommand::new(values);
 
         database.set("test_key", Value::Integer(1));
-        command.invoke(&mut database);
 
+        let command = DecrCommand::new(values);
+        let _ = command.invoke(&mut database);
         let expected = Value::Integer(0);
         let actual = database.get("test_key").unwrap();
 

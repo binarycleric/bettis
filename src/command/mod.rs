@@ -17,14 +17,14 @@ trait Command<T> where Self: Sized  {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
 
     fn hash_key(values: &Vec<resp::Value>) -> String {
-        if let resp::Value::Bulk(ref hash_key) = values[1] {
+        if let resp::Value::Bulk(ref hash_key) = values[0] {
             return hash_key.clone()
         }
         panic!("Shouldn't get here")
     }
 
     fn single_value(values: &Vec<resp::Value>) -> resp::Value {
-        values[2].clone()
+        values[1].clone()
     }
 
     fn ok_response() -> resp::Value {

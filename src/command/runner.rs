@@ -87,7 +87,7 @@ impl Runner {
     }
 
     pub fn run(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        let values = self.values.clone();
+        let values = self.values.get(1..).unwrap().clone().to_vec();
 
         match self.command_name {
             AvailableCommand::Select => {
