@@ -116,8 +116,4 @@ impl Runner {
             }
         }
     }
-
-    fn hash_key(&self) -> resp::Value {
-        self.values[1].clone()
-    }
 }
