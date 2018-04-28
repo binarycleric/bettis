@@ -14,15 +14,11 @@ impl Command<DelCommand> for DelCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke Del...");
-        debug!("KEY --> {:?}", self.hash_key());
+        debug!("KEY --> {:?}", Self::hash_key(&self.values));
 
-        database.del(&self.hash_key());
-        Ok(self.ok_response())
+        database.del(&Self::hash_key(&self.values));
+        Ok(Self::ok_response())
     }
 }

@@ -14,14 +14,14 @@ impl Command<SetCommand> for SetCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke set...");
 
-        database.set(&self.hash_key(), self.single_value());
-        Ok(self.ok_response())
+        database.set(
+            &Self::hash_key(&self.values),
+            Self::single_value(&self.values)
+        )
+        ;
+        Ok(Self::ok_response())
     }
 }

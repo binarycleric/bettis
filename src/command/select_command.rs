@@ -14,13 +14,9 @@ impl Command<SelectCommand> for SelectCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke select...");
         // data_table.set(&self.key, self.value);
-        Ok(self.ok_response())
+        Ok(Self::ok_response())
     }
 }

@@ -14,14 +14,10 @@ impl Command<IncrCommand> for IncrCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke Incr...");
-        debug!("KEY --> {:?}", self.hash_key());
+        debug!("KEY --> {:?}", Self::hash_key(&self.values));
 
-        database.incr(&self.hash_key())
+        database.incr(&Self::hash_key(&self.values))
     }
 }

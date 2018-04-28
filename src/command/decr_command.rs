@@ -14,14 +14,10 @@ impl Command<DecrCommand> for DecrCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke Decr...");
-        debug!("KEY --> {:?}", self.hash_key());
+        debug!("KEY --> {:?}", Self::hash_key(&self.values));
 
-        database.decr(&self.hash_key())
+        database.decr(&Self::hash_key(&self.values))
     }
 }

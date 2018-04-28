@@ -14,17 +14,13 @@ impl Command<GetCommand> for GetCommand {
         }
     }
 
-    fn get_values(&self) -> Vec<resp::Value> {
-        self.values.clone()
-    }
-
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke Get...");
-        debug!("KEY --> {:?}", self.hash_key());
+        debug!("KEY --> {:?}", Self::hash_key(&self.values));
 
-        match database.get(&self.hash_key()) {
+        match database.get(&Self::hash_key(&self.values)) {
             Some(value) => Ok(value.clone()),
-            None => Err(self.error_response()),
+            None => Err(Self::error_response()),
         }
     }
 }

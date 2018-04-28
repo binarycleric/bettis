@@ -15,24 +15,23 @@ pub use self::runner::run;
 trait Command<T> where Self: Sized  {
     fn new(values: Vec<resp::Value>) -> Self;
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
-    fn get_values(&self) -> Vec<resp::Value>;
 
-    fn hash_key(&self) -> String {
-        if let resp::Value::Bulk(ref hash_key) = self.get_values()[1] {
+    fn hash_key(values: &Vec<resp::Value>) -> String {
+        if let resp::Value::Bulk(ref hash_key) = values[1] {
             return hash_key.clone()
         }
         panic!("Shouldn't get here")
     }
 
-    fn single_value(&self) -> resp::Value {
-        self.get_values()[2].clone()
+    fn single_value(values: &Vec<resp::Value>) -> resp::Value {
+        values[2].clone()
     }
 
-    fn ok_response(&self) -> resp::Value {
+    fn ok_response() -> resp::Value {
         resp::Value::String("OK".to_string())
     }
 
-    fn error_response(&self) -> resp::Value {
+    fn error_response() -> resp::Value {
         resp::Value::Error("1".to_string())
     }
 }
