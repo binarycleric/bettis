@@ -21,3 +21,29 @@ impl Command<DecrCommand> for DecrCommand {
         database.decr(&Self::hash_key(&self.values))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Command;
+    use super::DecrCommand;
+    use super::Database;
+    use super::resp::Value;
+
+    #[test]
+    fn it_decrements_provided_value() {
+        let mut database = Database::new();
+        let values = vec![
+            Value::Bulk("decr".to_string()),
+            Value::Bulk("test_key".to_string()),
+        ];
+        let command = DecrCommand::new(values);
+
+        database.set("test_key", Value::Integer(1));
+        command.invoke(&mut database);
+
+        let expected = Value::Integer(0);
+        let actual = database.get("test_key").unwrap();
+
+        assert_eq!(*actual, expected);
+    }
+}
