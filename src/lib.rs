@@ -4,11 +4,11 @@ extern crate simple_logger;
 extern crate resp;
 
 mod tcp;
-mod storage;
+pub mod storage;
 mod command;
 
 use tcp::Listener;
-use storage::Database;
+pub use storage::Database;
 
 pub fn start() {
     simple_logger::init().unwrap();
