@@ -4,30 +4,24 @@ use storage::Database;
 use command::Command;
 
 pub struct SetCommand {
-    key: resp::Value,
-    value: resp::Value,
+    values: Vec<resp::Value>,
 }
 
-impl SetCommand {
-    pub fn new(key: resp::Value, value: resp::Value) -> Self {
+impl Command<SetCommand> for SetCommand {
+    fn new(values: Vec<resp::Value>) -> Self {
         Self {
-            key: key,
-            value: value,
+            values: values
         }
     }
-}
 
-impl Command for SetCommand {
-    fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+    fn get_values(&self) -> Vec<resp::Value> {
+        self.values.clone()
+    }
+
+    fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke set...");
-        debug!("KEY --> {:?}", self.key);
-        debug!("VALUE --> {:?}", self.value);
 
-        if let resp::Value::Bulk(ref key) = self.key {
-            data_table.set(&key, self.value.clone());
-            Ok(self.ok_response())
-        } else {
-            Err(self.error_response())
-        }
+        database.set(&self.hash_key(), self.single_value());
+        Ok(self.ok_response())
     }
 }

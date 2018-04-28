@@ -4,25 +4,25 @@ use storage::Database;
 use command::Command;
 
 pub struct DelCommand {
-    key: resp::Value,
+    values: Vec<resp::Value>,
 }
 
-impl DelCommand {
-    pub fn new(key: resp::Value) -> Self {
-        Self { key: key }
-    }
-}
-
-impl Command for DelCommand {
-    fn invoke(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Del...");
-        debug!("KEY --> {:?}", self.key);
-
-        if let resp::Value::Bulk(ref key) = self.key {
-            data_table.del(&key);
-            Ok(self.ok_response())
-        } else {
-            Err(self.error_response())
+impl Command<DelCommand> for DelCommand {
+    fn new(values: Vec<resp::Value>) -> Self {
+        Self {
+            values: values
         }
+    }
+
+    fn get_values(&self) -> Vec<resp::Value> {
+        self.values.clone()
+    }
+
+    fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
+        debug!("Invoke Del...");
+        debug!("KEY --> {:?}", self.hash_key());
+
+        database.del(&self.hash_key());
+        Ok(self.ok_response())
     }
 }

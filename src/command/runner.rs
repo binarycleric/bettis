@@ -86,32 +86,33 @@ impl Runner {
         }
     }
 
-    pub fn run(&self, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+    pub fn run(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
+        let values = self.values.clone();
+
         match self.command_name {
             AvailableCommand::Select => {
-                let command = SelectCommand::new(self.hash_key());
-                command.invoke(data_table)
+                let command = SelectCommand::new(values);
+                command.invoke(database)
             }
             AvailableCommand::Set => {
-                let set_value = self.values[2].clone();
-                let command = SetCommand::new(self.hash_key(), set_value);
-                command.invoke(data_table)
+                let command = SetCommand::new(values);
+                command.invoke(database)
             }
             AvailableCommand::Get => {
-                let command = GetCommand::new(self.hash_key());
-                command.invoke(data_table)
+                let command = GetCommand::new(values);
+                command.invoke(database)
             }
             AvailableCommand::Del => {
-                let command = DelCommand::new(self.hash_key());
-                command.invoke(data_table)
+                let command = DelCommand::new(values);
+                command.invoke(database)
             }
             AvailableCommand::Incr => {
-                let command = IncrCommand::new(self.hash_key());
-                command.invoke(data_table)
+                let command = IncrCommand::new(values);
+                command.invoke(database)
             }
             AvailableCommand::Decr => {
-                let command = DecrCommand::new(self.hash_key());
-                command.invoke(data_table)
+                let command = DecrCommand::new(values);
+                command.invoke(database)
             }
         }
     }
