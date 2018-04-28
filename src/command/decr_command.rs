@@ -24,7 +24,7 @@ impl Command<DecrCommand> for DecrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::{Command, DecrCommand, Database};
+    use super::*;
     use super::resp::Value;
 
     #[test]
