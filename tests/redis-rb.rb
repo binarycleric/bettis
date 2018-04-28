@@ -16,6 +16,23 @@ def decr_tests
   puts "Decr test final value: #{@redis.get("decr-test")}, Expected: 1"
 end
 
+def basic_tests
+  @redis.set("test", 23)
+  puts "test key"
+  pp @redis.get("test")
+
+  @redis.set("test", 24)
+  puts "modified test key"
+  pp @redis.get("test")
+
+  @redis.set("test-2", "nice")
+  puts "test-2 key"
+  pp @redis.get("test-2")
+
+  @redis.set("test-3", "Woohoo\r\nThis\r\nIs\r\nSuper\r\nWeird")
+  pp @redis.get("test-3")
+end
+
 @redis = Redis.new(host: "127.0.0.1", port: 6379, db: 15)
 
 time = Benchmark.realtime do
@@ -23,25 +40,8 @@ time = Benchmark.realtime do
   @redis.del("decr-test")
 
   puts "Running Reddis tests\n\n"
+  basic_tests
   incr_tests
   decr_tests
 end
 puts "Total time: #{time}"
-
-
-__END__
-
-@redis.set("test", 23)
-puts "test key"
-pp @redis.get("test")
-
-@redis.set("test", 24)
-puts "modified test key"
-pp @redis.get("test")
-
-@redis.set("test-2", "nice")
-puts "test-2 key"
-pp @redis.get("test-2")
-
-@redis.set("test-3", "Woohoo\r\nThis\r\nIs\r\nSuper\r\nWeird")
-pp @redis.get("test-3")
