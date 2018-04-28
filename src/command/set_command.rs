@@ -17,11 +17,10 @@ impl Command<SetCommand> for SetCommand {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         debug!("Invoke set...");
 
-        database.set(
-            &Self::hash_key(&self.values),
-            Self::single_value(&self.values)
-        )
-        ;
+        let key = Self::hash_key(&self.values);
+        let value = Self::single_value(&self.values);
+
+        database.set(&key, value);
         Ok(Self::ok_response())
     }
 }
