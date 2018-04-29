@@ -3,12 +3,11 @@ extern crate resp;
 use storage::Database;
 use command::Runnable;
 
-#[derive(Debug)]
-pub struct SelectCommand {
+pub struct Del {
     values: Vec<resp::Value>,
 }
 
-impl SelectCommand {
+impl Del {
     pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
@@ -16,9 +15,9 @@ impl SelectCommand {
     }
 }
 
-impl Runnable for SelectCommand {
+impl Runnable for Del {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        // data_table.set(&self.key, self.value);
+        database.del(&Self::hash_key(&self.values));
         Ok(Self::ok_response())
     }
 }

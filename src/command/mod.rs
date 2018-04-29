@@ -1,11 +1,5 @@
 extern crate resp;
 
-mod set_command;
-mod select_command;
-mod get_command;
-mod del_command;
-mod incr_command;
-mod decr_command;
 mod runner;
 mod commands;
 

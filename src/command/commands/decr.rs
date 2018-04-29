@@ -3,11 +3,11 @@ extern crate resp;
 use storage::Database;
 use command::Runnable;
 
-pub struct DecrCommand {
+pub struct Decr {
     values: Vec<resp::Value>,
 }
 
-impl DecrCommand {
+impl Decr {
     pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
@@ -15,7 +15,7 @@ impl DecrCommand {
     }
 }
 
-impl Runnable for DecrCommand {
+impl Runnable for Decr {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         database.decr(&Self::hash_key(&self.values))
     }
@@ -23,7 +23,7 @@ impl Runnable for DecrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::{DecrCommand, Database, Runnable};
+    use super::*;
     use super::resp::Value;
 
     #[test]
@@ -35,7 +35,7 @@ mod tests {
 
         database.set("test_key", Value::Integer(1));
 
-        let command = DecrCommand::new(values);
+        let command = Decr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(0);
         let actual = database.get("test_key").unwrap();
@@ -50,7 +50,7 @@ mod tests {
             Value::Bulk("test_key".to_string()),
         ];
 
-        let command = DecrCommand::new(values);
+        let command = Decr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(-1);
         let actual = database.get("test_key").unwrap();

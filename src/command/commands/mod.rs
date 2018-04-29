@@ -1,9 +1,16 @@
-pub use super::set_command::SetCommand;
-pub use super::select_command::SelectCommand;
-pub use super::get_command::GetCommand;
-pub use super::del_command::DelCommand;
-pub use super::incr_command::IncrCommand;
-pub use super::decr_command::DecrCommand;
+mod set;
+mod select;
+mod get;
+mod del;
+mod incr;
+mod decr;
+
+pub use self::set::Set;
+pub use self::select::Select;
+pub use self::get::Get;
+pub use self::del::Del;
+pub use self::incr::Incr;
+pub use self::decr::Decr;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";

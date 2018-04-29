@@ -3,11 +3,12 @@ extern crate resp;
 use storage::Database;
 use command::Runnable;
 
-pub struct GetCommand {
+#[derive(Debug)]
+pub struct Select {
     values: Vec<resp::Value>,
 }
 
-impl GetCommand {
+impl Select {
     pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
@@ -15,11 +16,9 @@ impl GetCommand {
     }
 }
 
-impl Runnable for GetCommand {
+impl Runnable for Select {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        match database.get(&Self::hash_key(&self.values)) {
-            Some(value) => Ok(value.clone()),
-            None => Err(Self::error_response()),
-        }
+        // data_table.set(&self.key, self.value);
+        Ok(Self::ok_response())
     }
 }

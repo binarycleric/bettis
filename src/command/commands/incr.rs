@@ -3,11 +3,11 @@ extern crate resp;
 use storage::Database;
 use command::Runnable;
 
-pub struct IncrCommand {
+pub struct Incr {
     values: Vec<resp::Value>,
 }
 
-impl IncrCommand {
+impl Incr {
     pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
@@ -15,7 +15,7 @@ impl IncrCommand {
     }
 }
 
-impl Runnable for IncrCommand {
+impl Runnable for Incr {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         database.incr(&Self::hash_key(&self.values))
     }
@@ -23,7 +23,7 @@ impl Runnable for IncrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::{IncrCommand, Database, Runnable};
+    use super::*;
     use super::resp::Value;
 
     #[test]
@@ -35,7 +35,7 @@ mod tests {
 
         database.set("test_key", Value::Integer(1));
 
-        let command = IncrCommand::new(values);
+        let command = Incr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(2);
         let actual = database.get("test_key").unwrap();
@@ -50,7 +50,7 @@ mod tests {
             Value::Bulk("test_key".to_string()),
         ];
 
-        let command = IncrCommand::new(values);
+        let command = Incr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(1);
         let actual = database.get("test_key").unwrap();

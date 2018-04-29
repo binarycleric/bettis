@@ -4,7 +4,6 @@ use std::io::BufReader;
 use self::resp::{Value, Decoder};
 
 use super::Runnable;
-use super::commands::*;
 use super::commands::Available as AvailableCommand;
 
 use storage::Database;
@@ -56,27 +55,27 @@ impl Runner {
         let values = self.values.get(1..).unwrap().clone().to_vec();
         match self.command_name {
             AvailableCommand::Select => {
-                let command = SelectCommand::new(values);
+                let command = super::commands::Select::new(values);
                 command.invoke(database)
             }
             AvailableCommand::Set => {
-                let command = SetCommand::new(values);
+                let command = super::commands::Set::new(values);
                 command.invoke(database)
             }
             AvailableCommand::Get => {
-                let command = GetCommand::new(values);
+                let command = super::commands::Get::new(values);
                 command.invoke(database)
             }
             AvailableCommand::Del => {
-                let command = DelCommand::new(values);
+                let command = super::commands::Del::new(values);
                 command.invoke(database)
             }
             AvailableCommand::Incr => {
-                let command = IncrCommand::new(values);
+                let command = super::commands::Incr::new(values);
                 command.invoke(database)
             }
             AvailableCommand::Decr => {
-                let command = DecrCommand::new(values);
+                let command = super::commands::Decr::new(values);
                 command.invoke(database)
             }
         }
