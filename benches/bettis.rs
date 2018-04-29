@@ -14,22 +14,37 @@ fn database_set(bench: &mut Bencher) {
     })
 }
 
-/*
-fn a(bench: &mut Bencher) {
+fn database_get(bench: &mut Bencher) {
+    let mut database = Database::new();
+    let value = bettis::bulk_string("example-1");
+    database.set("example", value);
+
     bench.iter(|| {
-        (0..1000).fold(0, |x, y| x + y)
+        database.get("example");
     })
 }
 
-fn b(bench: &mut Bencher) {
-    const N: usize = 1024;
+fn database_incr(bench: &mut Bencher) {
     bench.iter(|| {
-        vec![0u8; N]
-    });
-
-    bench.bytes = N as u64;
+        let mut database = Database::new();
+        let value = bettis::integer(1);
+        let _ = database.incr("example");
+    })
 }
-*/
 
-benchmark_group!(benches, database_set);
+fn database_decr(bench: &mut Bencher) {
+    bench.iter(|| {
+        let mut database = Database::new();
+        let value = bettis::integer(1);
+        let _ = database.decr("example");
+    })
+}
+
+benchmark_group!(benches,
+    database_get,
+    database_set,
+    database_incr,
+    database_decr
+);
+
 benchmark_main!(benches);
