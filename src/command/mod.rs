@@ -7,7 +7,6 @@ use storage::Database;
 
 pub use self::runner::run;
 
-
 trait Runnable {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
 

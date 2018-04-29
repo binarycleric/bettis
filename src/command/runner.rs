@@ -13,14 +13,7 @@ pub fn run(reader: BufReader<&[u8]>, data_table: &mut Database) -> Result<resp::
     let values = decoder.decode().unwrap();
     let runner = Runner::new(values);
 
-    match runner {
-        Ok(runner) => {
-            runner.run(data_table)
-        }
-        Err(error) => {
-            Err(resp::Value::Error(error.to_string()))
-        }
-    }
+    runner.run(data_table)
 }
 
 struct Runner {
@@ -29,26 +22,31 @@ struct Runner {
 }
 
 impl Runner {
-    pub fn new(incoming: resp::Value) -> Result<Self, &'static str> {
-        let command_name: AvailableCommand;
-        let values: Vec<resp::Value>;
+    pub fn new(incoming: resp::Value) -> Self {
+        let (command_name, values) = Self::extract_values(incoming);
 
+        Self {
+            command_name: command_name,
+            values: values,
+        }
+    }
+
+    fn extract_values(incoming: resp::Value) -> (AvailableCommand, Vec<resp::Value>) {
         if let Value::Array(ref array) = incoming {
-            values = array.clone();
+            let command_name: AvailableCommand;
+            let values: Vec<resp::Value>;
 
             if let Value::Bulk(ref cname) = array[0] {
                 command_name = AvailableCommand::from_str(cname);
-
-                Ok(Self {
-                    command_name: command_name,
-                    values: values,
-                })
             } else {
-                Err("Malformed request")
+                panic!("This shouldn't happen");
             }
-        } else {
-            Err("Malformed request")
+
+            values = array.get(1..).unwrap().clone().to_vec();
+
+            return (command_name, values);
         }
+        panic!("This shouldn't happen");
     }
 
     pub fn run(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {

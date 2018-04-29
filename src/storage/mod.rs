@@ -29,7 +29,7 @@ impl Database {
     }
 
     pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
-        let mut new_value: i64;
+        let new_value: i64;
 
         match self.get(key) {
             Some(value) => {
