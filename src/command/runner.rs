@@ -50,7 +50,8 @@ impl Runner {
     }
 
     pub fn run(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        let values = self.values.get(1..).unwrap().clone().to_vec();
+        let values = self.values.clone().to_vec();
+
         match self.command_name {
             AvailableCommand::Select => {
                 let command = super::commands::Select::new(values);

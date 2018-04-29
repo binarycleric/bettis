@@ -11,6 +11,9 @@ trait Runnable {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
 
     fn hash_key(values: &Vec<resp::Value>) -> String {
+
+        println!("{:?}", values);
+
         match values[0] {
             resp::Value::Bulk(ref hash_key) => {
                 hash_key.clone()
