@@ -15,9 +15,6 @@ impl Command<DecrCommand> for DecrCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Decr...");
-        debug!("KEY --> {:?}", Self::hash_key(&self.values));
-
         database.decr(&Self::hash_key(&self.values))
     }
 }

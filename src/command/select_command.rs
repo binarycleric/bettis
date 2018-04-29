@@ -15,7 +15,6 @@ impl Command<SelectCommand> for SelectCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke select...");
         // data_table.set(&self.key, self.value);
         Ok(Self::ok_response())
     }

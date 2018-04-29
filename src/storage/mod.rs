@@ -4,20 +4,9 @@ use std::collections::HashMap;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
-#[derive(Debug, Hash, PartialEq, Eq)]
-pub struct DataKey {
-    key: String,
-}
-
-impl DataKey {
-    pub fn new(key: String) -> DataKey {
-        return DataKey { key: key };
-    }
-}
-
 #[derive(Debug)]
 pub struct Database {
-    value_map: HashMap<DataKey, resp::Value>,
+    value_map: HashMap<String, resp::Value>,
 }
 
 impl Database {
@@ -28,18 +17,15 @@ impl Database {
     }
 
     pub fn set<'kl>(&mut self, key: &'kl str, value: resp::Value) {
-        let data_key = DataKey::new(key.to_string());
-        self.value_map.insert(data_key, value);
+        self.value_map.insert(key.to_string(), value);
     }
 
     pub fn get<'kl>(&self, key: &'kl str) -> Option<&resp::Value> {
-        let data_key = DataKey::new(key.to_string());
-        self.value_map.get(&data_key)
+        self.value_map.get(&key.to_string())
     }
 
     pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
-        let data_key = DataKey::new(key.to_string());
-        self.value_map.remove(&data_key)
+        self.value_map.remove(&key.to_string())
     }
 
     pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {

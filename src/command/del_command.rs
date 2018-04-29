@@ -15,9 +15,6 @@ impl Command<DelCommand> for DelCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Del...");
-        debug!("KEY --> {:?}", Self::hash_key(&self.values));
-
         database.del(&Self::hash_key(&self.values));
         Ok(Self::ok_response())
     }

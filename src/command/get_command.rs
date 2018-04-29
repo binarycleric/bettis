@@ -15,9 +15,6 @@ impl Command<GetCommand> for GetCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Get...");
-        debug!("KEY --> {:?}", Self::hash_key(&self.values));
-
         match database.get(&Self::hash_key(&self.values)) {
             Some(value) => Ok(value.clone()),
             None => Err(Self::error_response()),

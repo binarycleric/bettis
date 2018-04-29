@@ -15,9 +15,6 @@ impl Command<IncrCommand> for IncrCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke Incr...");
-        debug!("KEY --> {:?}", Self::hash_key(&self.values));
-
         database.incr(&Self::hash_key(&self.values))
     }
 }

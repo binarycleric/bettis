@@ -15,8 +15,6 @@ impl Command<SetCommand> for SetCommand {
     }
 
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        debug!("Invoke set...");
-
         let key = Self::hash_key(&self.values);
         let value = Self::single_value(&self.values);
 
