@@ -1,19 +1,21 @@
 extern crate resp;
 
 use storage::Database;
-use command::Command;
+use command::Runnable;
 
 pub struct DecrCommand {
     values: Vec<resp::Value>,
 }
 
-impl Command<DecrCommand> for DecrCommand {
-    fn new(values: Vec<resp::Value>) -> Self {
+impl DecrCommand {
+    pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
         }
     }
+}
 
+impl Runnable for DecrCommand {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         database.decr(&Self::hash_key(&self.values))
     }
@@ -21,7 +23,7 @@ impl Command<DecrCommand> for DecrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{DecrCommand, Database, Runnable};
     use super::resp::Value;
 
     #[test]

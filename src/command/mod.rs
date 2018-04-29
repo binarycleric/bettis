@@ -7,20 +7,23 @@ mod del_command;
 mod incr_command;
 mod decr_command;
 mod runner;
+mod commands;
 
 use storage::Database;
 
 pub use self::runner::run;
 
-trait Command<T> where Self: Sized  {
-    fn new(values: Vec<resp::Value>) -> Self;
+
+trait Runnable {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
 
     fn hash_key(values: &Vec<resp::Value>) -> String {
-        if let resp::Value::Bulk(ref hash_key) = values[0] {
-            return hash_key.clone()
+        match values[0] {
+            resp::Value::Bulk(ref hash_key) => {
+                hash_key.clone()
+            }
+            _ => panic!("Shouldn't get here"),
         }
-        panic!("Shouldn't get here")
     }
 
     fn single_value(values: &Vec<resp::Value>) -> resp::Value {
@@ -35,5 +38,3 @@ trait Command<T> where Self: Sized  {
         resp::Value::Error("1".to_string())
     }
 }
-
-

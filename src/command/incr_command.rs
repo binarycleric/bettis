@@ -1,19 +1,21 @@
 extern crate resp;
 
 use storage::Database;
-use command::Command;
+use command::Runnable;
 
 pub struct IncrCommand {
     values: Vec<resp::Value>,
 }
 
-impl Command<IncrCommand> for IncrCommand {
-    fn new(values: Vec<resp::Value>) -> Self {
+impl IncrCommand {
+    pub fn new(values: Vec<resp::Value>) -> Self {
         Self {
             values: values
         }
     }
+}
 
+impl Runnable for IncrCommand {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         database.incr(&Self::hash_key(&self.values))
     }
@@ -21,7 +23,7 @@ impl Command<IncrCommand> for IncrCommand {
 
 #[cfg(test)]
 mod tests {
-    use super::{Command, IncrCommand, Database};
+    use super::{IncrCommand, Database, Runnable};
     use super::resp::Value;
 
     #[test]

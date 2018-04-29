@@ -3,45 +3,11 @@ extern crate resp;
 use std::io::BufReader;
 use self::resp::{Value, Decoder};
 
-use super::Command;
-use super::set_command::SetCommand;
-use super::select_command::SelectCommand;
-use super::get_command::GetCommand;
-use super::del_command::DelCommand;
-use super::incr_command::IncrCommand;
-use super::decr_command::DecrCommand;
+use super::Runnable;
+use super::commands::*;
+use super::commands::Available as AvailableCommand;
 
 use storage::Database;
-
-const SELECT_COMMAND: &'static str = "select";
-const SET_COMMAND: &'static str = "set";
-const GET_COMMAND: &'static str = "get";
-const DEL_COMMAND: &'static str = "del";
-const INCR_COMMAND: &'static str = "incr";
-const DECR_COMMAND: &'static str = "decr";
-
-enum AvailableCommand {
-    Select,
-    Set,
-    Get,
-    Incr,
-    Decr,
-    Del,
-}
-
-impl AvailableCommand {
-    pub fn from_str<'a>(string: &'a str) -> Self {
-        match string {
-            SELECT_COMMAND => AvailableCommand::Select,
-            SET_COMMAND => AvailableCommand::Set,
-            GET_COMMAND => AvailableCommand::Get,
-            DEL_COMMAND => AvailableCommand::Del,
-            INCR_COMMAND => AvailableCommand::Incr,
-            DECR_COMMAND => AvailableCommand::Decr,
-            _ => panic!("Nooo"),
-        }
-    }
-}
 
 pub fn run(reader: BufReader<&[u8]>, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
     let mut decoder = Decoder::new(reader);
@@ -88,7 +54,6 @@ impl Runner {
 
     pub fn run(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
         let values = self.values.get(1..).unwrap().clone().to_vec();
-
         match self.command_name {
             AvailableCommand::Select => {
                 let command = SelectCommand::new(values);
