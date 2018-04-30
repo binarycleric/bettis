@@ -8,11 +8,11 @@ use rand::{Rng, thread_rng};
 use bettis::Database;
 
 fn database_set(bench: &mut Bencher) {
-    bench.iter(|| {
-        let mut database = Database::new();
-        let value = bettis::bulk_string("example-1");
+    let mut database = Database::new();
+    let value = bettis::bulk_string("example-1");
 
-        database.set("example".to_string(), value);
+    bench.iter(|| {
+        database.set("example".to_string(), value.clone());
     })
 }
 
