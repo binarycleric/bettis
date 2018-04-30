@@ -23,7 +23,7 @@ fn database_get(bench: &mut Bencher) {
 
     bench.iter(|| {
         database.get("example".to_string());
-    });
+    })
 }
 
 fn database_get_missing_key(bench: &mut Bencher) {
@@ -31,7 +31,7 @@ fn database_get_missing_key(bench: &mut Bencher) {
 
       bench.iter(|| {
         database.get("example".to_string());
-    });
+    })
 }
 
 fn database_get_with_10000_items(bench: &mut Bencher) {
@@ -62,7 +62,7 @@ fn database_decr(bench: &mut Bencher) {
 
     bench.iter(|| {
         let _ = database.decr("example".to_string());
-    });
+    })
 }
 
 benchmark_group!(benches,
