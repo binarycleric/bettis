@@ -9,7 +9,8 @@ use super::DataKey;
 use self::chrono::{DateTime, Utc};
 use self::resp::Value as RespValue;
 
-struct TtlDatum {
+#[derive(Debug)]
+pub struct TtlDatum {
     pub duration: Duration,
     pub started: DateTime<Utc>,
 }

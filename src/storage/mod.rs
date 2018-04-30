@@ -4,22 +4,25 @@ mod data_key;
 mod data_value;
 
 use self::data_value::DataValue as DataValueExp;
+use self::data_value::TtlDatum;
+use self::data_key::DataKey;
 
 use std::collections::HashMap;
 use resp::Value as DataValue;
-use self::data_key::DataKey;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 #[derive(Debug)]
 pub struct Database {
     values: HashMap<DataKey, DataValue>,
+    ttls: HashMap<DataKey, TtlDatum>,
 }
 
 impl Database {
     pub fn new() -> Self {
         Self {
             values: HashMap::new(),
+            ttls: HashMap::new(),
         }
     }
 
