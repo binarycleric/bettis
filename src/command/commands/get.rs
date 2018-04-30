@@ -9,9 +9,7 @@ pub struct Get {
 
 impl Get {
     pub fn new(values: Vec<resp::Value>) -> Self {
-        Self {
-            values: values
-        }
+        Self { values: values }
     }
 }
 

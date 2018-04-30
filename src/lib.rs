@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate log;
-extern crate simple_logger;
 extern crate resp;
+extern crate simple_logger;
 
 mod tcp;
 pub mod storage;

@@ -1,10 +1,10 @@
 #[macro_use]
 extern crate bencher;
-extern crate rand;
 extern crate bettis;
+extern crate rand;
 
 use bencher::Bencher;
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 use bettis::Database;
 
 fn database_set(bench: &mut Bencher) {
@@ -65,7 +65,8 @@ fn database_decr(bench: &mut Bencher) {
     })
 }
 
-benchmark_group!(benches,
+benchmark_group!(
+    benches,
     database_get,
     database_get_missing_key,
     database_get_with_10000_items,

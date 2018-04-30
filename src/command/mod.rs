@@ -12,9 +12,7 @@ trait Runnable {
 
     fn hash_key(values: &Vec<resp::Value>) -> String {
         match values[0] {
-            resp::Value::Bulk(ref hash_key) => {
-                hash_key.clone()
-            }
+            resp::Value::Bulk(ref hash_key) => hash_key.clone(),
             _ => panic!("Shouldn't get here"),
         }
     }

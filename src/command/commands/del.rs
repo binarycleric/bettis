@@ -9,9 +9,7 @@ pub struct Del {
 
 impl Del {
     pub fn new(values: Vec<resp::Value>) -> Self {
-        Self {
-            values: values
-        }
+        Self { values: values }
     }
 }
 

@@ -5,8 +5,6 @@ pub struct DataKey {
 
 impl DataKey {
     pub fn new(string: String) -> Self {
-        Self {
-            key: string,
-        }
+        Self { key: string }
     }
 }

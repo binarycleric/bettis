@@ -1,14 +1,17 @@
 extern crate resp;
 
 use std::io::BufReader;
-use self::resp::{Value, Decoder};
+use self::resp::{Decoder, Value};
 
 use super::Runnable;
 use super::commands::Available as AvailableCommand;
 
 use storage::Database;
 
-pub fn run(reader: BufReader<&[u8]>, data_table: &mut Database) -> Result<resp::Value, resp::Value> {
+pub fn run(
+    reader: BufReader<&[u8]>,
+    data_table: &mut Database,
+) -> Result<resp::Value, resp::Value> {
     let mut decoder = Decoder::new(reader);
     let values = decoder.decode().unwrap();
     let command = Command::new(values);

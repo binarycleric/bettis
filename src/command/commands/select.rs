@@ -10,9 +10,7 @@ pub struct Select {
 
 impl Select {
     pub fn new(values: Vec<resp::Value>) -> Self {
-        Self {
-            values: values
-        }
+        Self { values: values }
     }
 }
 

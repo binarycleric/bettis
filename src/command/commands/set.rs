@@ -9,9 +9,7 @@ pub struct Set {
 
 impl Set {
     pub fn new(values: Vec<resp::Value>) -> Self {
-        Self {
-            values: values
-        }
+        Self { values: values }
     }
 }
 

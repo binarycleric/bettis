@@ -9,9 +9,7 @@ pub struct Incr {
 
 impl Incr {
     pub fn new(values: Vec<resp::Value>) -> Self {
-        Self {
-            values: values
-        }
+        Self { values: values }
     }
 }
 
@@ -29,9 +27,7 @@ mod tests {
     #[test]
     fn it_incroments_provided_value() {
         let mut database = Database::new();
-        let values = vec![
-            Value::Bulk("test_key".to_string()),
-        ];
+        let values = vec![Value::Bulk("test_key".to_string())];
 
         database.set("test_key".to_string(), Value::Integer(1));
 
@@ -46,9 +42,7 @@ mod tests {
     #[test]
     fn it_creates_value_if_does_not_exist() {
         let mut database = Database::new();
-        let values = vec![
-            Value::Bulk("test_key".to_string()),
-        ];
+        let values = vec![Value::Bulk("test_key".to_string())];
 
         let command = Incr::new(values);
         let _ = command.invoke(&mut database);
