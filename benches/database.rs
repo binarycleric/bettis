@@ -24,10 +24,6 @@ fn database_get(bench: &mut Bencher) {
     bench.iter(|| {
         database.get("example".to_string());
     });
-
-    bench.iter(|| {
-        database.get("example-2".to_string());
-    });
 }
 
 fn database_get_missing_key(bench: &mut Bencher) {
