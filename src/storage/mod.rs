@@ -13,26 +13,26 @@ const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of 
 
 #[derive(Debug)]
 pub struct Database {
-    value_map: HashMap<DataKey, DataValue>,
+    values: HashMap<DataKey, DataValue>,
 }
 
 impl Database {
     pub fn new() -> Self {
         Self {
-            value_map: HashMap::new(),
+            values: HashMap::new(),
         }
     }
 
     pub fn set(&mut self, key: String, value: DataValue) {
-        self.value_map.insert(Self::data_key(key), value);
+        self.values.insert(Self::data_key(key), value);
     }
 
     pub fn get(&self, key: String) -> Option<&DataValue> {
-        self.value_map.get(&Self::data_key(key))
+        self.values.get(&Self::data_key(key))
     }
 
     pub fn del(&mut self, key: String) -> Option<DataValue> {
-        self.value_map.remove(&Self::data_key(key))
+        self.values.remove(&Self::data_key(key))
     }
 
     pub fn incr(&mut self, key: String) -> Result<DataValue, DataValue> {
