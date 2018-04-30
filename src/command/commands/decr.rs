@@ -17,7 +17,7 @@ impl Decr {
 
 impl Runnable for Decr {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        database.decr(&Self::hash_key(&self.values))
+        database.decr(Self::hash_key(&self.values))
     }
 }
 
@@ -33,12 +33,12 @@ mod tests {
             Value::Bulk("test_key".to_string()),
         ];
 
-        database.set("test_key", Value::Integer(1));
+        database.set("test_key".to_string(), Value::Integer(1));
 
         let command = Decr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(0);
-        let actual = database.get("test_key").unwrap();
+        let actual = database.get("test_key".to_string()).unwrap();
 
         assert_eq!(*actual, expected);
     }
@@ -53,7 +53,7 @@ mod tests {
         let command = Decr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(-1);
-        let actual = database.get("test_key").unwrap();
+        let actual = database.get("test_key".to_string()).unwrap();
 
         assert_eq!(*actual, expected);
     }

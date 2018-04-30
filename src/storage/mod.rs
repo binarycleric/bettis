@@ -1,12 +1,19 @@
 extern crate resp;
 
+mod data_key;
+mod data_store;
+
 use std::collections::HashMap;
+use resp::Value as DataValue;
+use self::data_key::DataKey;
+
+pub use self::data_store::DataStore;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 #[derive(Debug)]
 pub struct Database {
-    value_map: HashMap<String, resp::Value>,
+    value_map: HashMap<DataKey, DataValue>,
 }
 
 impl Database {
@@ -16,27 +23,27 @@ impl Database {
         }
     }
 
-    pub fn set<'kl>(&mut self, key: &'kl str, value: resp::Value) {
-        self.value_map.insert(key.to_string(), value);
+    pub fn set(&mut self, key: String, value: DataValue) {
+        self.value_map.insert(Self::data_key(key), value);
     }
 
-    pub fn get<'kl>(&self, key: &'kl str) -> Option<&resp::Value> {
-        self.value_map.get(&key.to_string())
+    pub fn get(&self, key: String) -> Option<&DataValue> {
+        self.value_map.get(&Self::data_key(key))
     }
 
-    pub fn del<'kl>(&mut self, key: &'kl str) -> Option<resp::Value> {
-        self.value_map.remove(&key.to_string())
+    pub fn del(&mut self, key: String) -> Option<DataValue> {
+        self.value_map.remove(&Self::data_key(key))
     }
 
-    pub fn incr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
+    pub fn incr(&mut self, key: String) -> Result<DataValue, DataValue> {
         let new_value: i64;
 
-        match self.get(key) {
+        match self.get(key.clone()) {
             Some(value) => {
-                if let &resp::Value::Integer(ref int) = value {
+                if let &DataValue::Integer(ref int) = value {
                     new_value = int.clone() + 1;
                 } else {
-                    return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
+                    return Err(DataValue::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
             None => {
@@ -44,19 +51,19 @@ impl Database {
             }
         }
 
-        self.set(key, resp::Value::Integer(new_value));
-        Ok(resp::Value::Integer(new_value))
+        self.set(key.clone(), DataValue::Integer(new_value));
+        Ok(DataValue::Integer(new_value))
     }
 
-    pub fn decr<'kl>(&mut self, key: &'kl str) -> Result<resp::Value, resp::Value> {
+    pub fn decr(&mut self, key: String) -> Result<DataValue, DataValue> {
         let new_value: i64;
 
-        match self.get(key) {
+        match self.get(key.clone()) {
             Some(value) => {
-                if let &resp::Value::Integer(ref int) = value {
+                if let &DataValue::Integer(ref int) = value {
                     new_value = int.clone() - 1;
                 } else {
-                    return Err(resp::Value::Error(INVALID_INCR_ERROR.to_string()));
+                    return Err(DataValue::Error(INVALID_INCR_ERROR.to_string()));
                 }
             }
             None => {
@@ -64,7 +71,11 @@ impl Database {
             }
         }
 
-        self.set(key, resp::Value::Integer(new_value));
-        Ok(resp::Value::Integer(new_value))
+        self.set(key.clone(), DataValue::Integer(new_value));
+        Ok(DataValue::Integer(new_value))
+    }
+
+    fn data_key(key: String) -> DataKey {
+        DataKey::new(key)
     }
 }

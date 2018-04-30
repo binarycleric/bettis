@@ -17,7 +17,7 @@ impl Incr {
 
 impl Runnable for Incr {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        database.incr(&Self::hash_key(&self.values))
+        database.incr(Self::hash_key(&self.values))
     }
 }
 
@@ -33,12 +33,12 @@ mod tests {
             Value::Bulk("test_key".to_string()),
         ];
 
-        database.set("test_key", Value::Integer(1));
+        database.set("test_key".to_string(), Value::Integer(1));
 
         let command = Incr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(2);
-        let actual = database.get("test_key").unwrap();
+        let actual = database.get("test_key".to_string()).unwrap();
 
         assert_eq!(*actual, expected);
     }
@@ -53,7 +53,7 @@ mod tests {
         let command = Incr::new(values);
         let _ = command.invoke(&mut database);
         let expected = Value::Integer(1);
-        let actual = database.get("test_key").unwrap();
+        let actual = database.get("test_key".to_string()).unwrap();
 
         assert_eq!(*actual, expected);
     }

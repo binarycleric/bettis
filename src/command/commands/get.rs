@@ -17,7 +17,7 @@ impl Get {
 
 impl Runnable for Get {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        match database.get(&Self::hash_key(&self.values)) {
+        match database.get(Self::hash_key(&self.values)) {
             Some(value) => Ok(value.clone()),
             None => Err(Self::error_response()),
         }

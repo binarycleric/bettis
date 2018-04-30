@@ -20,7 +20,7 @@ impl Runnable for Set {
         let key = Self::hash_key(&self.values);
         let value = Self::single_value(&self.values);
 
-        database.set(&key, value);
+        database.set(key, value);
         Ok(Self::ok_response())
     }
 }

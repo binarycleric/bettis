@@ -17,7 +17,7 @@ impl Del {
 
 impl Runnable for Del {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        database.del(&Self::hash_key(&self.values));
+        database.del(Self::hash_key(&self.values));
         Ok(Self::ok_response())
     }
 }
