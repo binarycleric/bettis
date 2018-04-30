@@ -18,7 +18,6 @@ impl Select {
 
 impl Runnable for Select {
     fn invoke(&self, _database: &mut Database) -> Result<resp::Value, resp::Value> {
-        // data_table.set(&self.key, self.value);
         Ok(Self::ok_response())
     }
 }
