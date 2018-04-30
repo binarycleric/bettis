@@ -29,7 +29,7 @@ fn database_get(bench: &mut Bencher) {
 fn database_get_missing_key(bench: &mut Bencher) {
     let database = Database::new();
 
-      bench.iter(|| {
+    bench.iter(|| {
         database.get("example".to_string());
     })
 }
