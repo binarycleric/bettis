@@ -1,13 +1,10 @@
 extern crate resp;
 
 mod data_key;
-mod data_store;
 
 use std::collections::HashMap;
 use resp::Value as DataValue;
 use self::data_key::DataKey;
-
-pub use self::data_store::DataStore;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
