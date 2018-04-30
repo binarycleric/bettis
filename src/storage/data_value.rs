@@ -9,18 +9,11 @@ use super::DataKey;
 use self::chrono::{DateTime, Utc};
 use self::resp::Value as RespValue;
 
-pub trait MetaDatum {}
-
-struct TtlMetaDatum {
-    pub ttl: Duration,
+struct TtlDatum {
+    pub duration: Duration,
+    pub started: DateTime<Utc>,
 }
 
-impl MetaDatum for TtlMetaDatum {}
-
-pub struct MetaData<T: MetaDatum> {
-    pub key: DataKey,
-    pub datum: T,
-}
 
 pub struct DataValue {
     value: RespValue,
