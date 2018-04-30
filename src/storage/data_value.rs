@@ -9,12 +9,20 @@ use self::chrono::{DateTime, Utc, Duration};
 use self::resp::Value as RespValue;
 
 #[derive(Debug)]
-pub struct TtlDatum {
+pub struct LifetimeDatum {
     pub duration: Duration,
     pub started: DateTime<Utc>,
 }
 
-impl TtlDatum {
+impl LifetimeDatum {
+
+    pub fn new(duration: Duration) -> Self {
+        Self {
+            duration: duration,
+            started: Utc::now(),
+        }
+    }
+
     pub fn remaining(&self) -> Duration {
         let expired = self.started + self.duration;
         let remaining = expired - Utc::now();

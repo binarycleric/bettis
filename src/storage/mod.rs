@@ -5,7 +5,7 @@ mod data_key;
 mod data_value;
 
 use self::data_value::DataValue as DataValueExp;
-use self::data_value::TtlDatum;
+use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
 
 use std::collections::HashMap;
@@ -17,7 +17,7 @@ const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of 
 #[derive(Debug)]
 pub struct Database {
     values: HashMap<DataKey, DataValue>,
-    ttls: HashMap<DataKey, TtlDatum>,
+    ttls: HashMap<DataKey, LifetimeDatum>,
 }
 
 impl Database {
@@ -45,13 +45,9 @@ impl Database {
     }
 
     // TODO: Figure out reasonable return values.
-    pub fn set_ttl(&mut self, key: String, ttl: Duration)  {
+    pub fn set_lifetime(&mut self, key: String, duration: Duration)  {
         if self.exist(key.as_str()) {
-            let ttl_datum = TtlDatum {
-                duration: ttl,
-                started: Utc::now(),
-            };
-
+            let ttl_datum = LifetimeDatum::new(duration);
             self.ttls.insert(Self::data_key(key), ttl_datum);
         } else {
             panic!("Key doesn't exist. Figure out how to fail gracefully later.")
@@ -120,7 +116,7 @@ mod test {
         let expected_ttl = Duration::seconds(5);
 
         database.set("example".to_string(), resp::Value::Integer(999));
-        database.set_ttl("example".to_string(), expected_ttl);
+        database.set_lifetime("example".to_string(), expected_ttl);
 
         let actual_ttl = database.ttl("example".to_string());
 
