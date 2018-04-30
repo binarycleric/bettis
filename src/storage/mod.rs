@@ -1,6 +1,9 @@
 extern crate resp;
 
 mod data_key;
+mod data_value;
+
+use self::data_value::DataValue as DataValueExp;
 
 use std::collections::HashMap;
 use resp::Value as DataValue;
