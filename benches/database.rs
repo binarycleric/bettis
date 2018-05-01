@@ -2,14 +2,19 @@
 extern crate bencher;
 extern crate bettis;
 extern crate rand;
+extern crate resp;
 
 use bencher::Bencher;
 use rand::{thread_rng, Rng};
 use bettis::Database;
 
+fn bulk_string<'a>(string: &'a str) -> resp::Value {
+    resp::Value::Bulk(string.to_string())
+}
+
 fn database_set(bench: &mut Bencher) {
     let mut database = Database::new();
-    let value = bettis::bulk_string("example-1");
+    let value = bulk_string("example-1");
 
     bench.iter(|| {
         database.set("example".to_string(), value.clone());
@@ -18,7 +23,7 @@ fn database_set(bench: &mut Bencher) {
 
 fn database_get(bench: &mut Bencher) {
     let mut database = Database::new();
-    let value = bettis::bulk_string("example-1");
+    let value = bulk_string("example-1");
     database.set("example".to_string(), value);
 
     bench.iter(|| {
@@ -39,7 +44,7 @@ fn database_get_with_10000_items(bench: &mut Bencher) {
     let mut database = Database::new();
 
     for x in 0..10000 {
-        let value = bettis::bulk_string("example");
+        let value = bulk_string("example");
         database.set(format!("example-{}", x), value);
     }
 
