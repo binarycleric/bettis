@@ -11,6 +11,7 @@ use self::chrono::Duration;
 use self::resp::Value as DataValue;
 
 use std::collections::HashMap as DataHash;
+use std::collections::BTreeMap;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
@@ -116,6 +117,7 @@ impl Database {
 
     fn data_key(key: String) -> DataKey {
         DataKey::new(key)
+
     }
 }
 
