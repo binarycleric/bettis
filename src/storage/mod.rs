@@ -19,6 +19,7 @@ const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of 
 pub struct Database {
     values: DataHash<DataKey, DataValue>,
     ttls: DataHash<DataKey, LifetimeDatum>,
+    keys: BTreeMap<Vec<u8>, DataKey>,
 }
 
 impl Database {
@@ -26,6 +27,7 @@ impl Database {
         Self {
             values: DataHash::new(),
             ttls: DataHash::new(),
+            keys: BTreeMap::new(),
         }
     }
 
@@ -117,7 +119,6 @@ impl Database {
 
     fn data_key(key: String) -> DataKey {
         DataKey::new(key)
-
     }
 }
 
