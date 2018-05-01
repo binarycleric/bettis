@@ -80,6 +80,10 @@ impl Command {
                 let command = super::commands::Decr::new(values);
                 command.invoke(database)
             }
+            AvailableCommand::Expire => {
+                let command = super::commands::Expire::new(values);
+                command.invoke(database)
+            }
         }
     }
 }

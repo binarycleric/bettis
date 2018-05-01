@@ -9,7 +9,7 @@ use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
 
 use std::collections::HashMap;
-use self::chrono::{DateTime, Utc, Duration};
+use self::chrono::Duration;
 use self::resp::Value as DataValue;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
@@ -44,13 +44,13 @@ impl Database {
         self.values.contains_key(&Self::data_key(key.to_string()))
     }
 
-    // TODO: Figure out reasonable return values.
-    pub fn set_lifetime(&mut self, key: String, duration: Duration)  {
+    pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
         if self.exist(key.as_str()) {
             let ttl_datum = LifetimeDatum::new(duration);
             self.ttls.insert(Self::data_key(key), ttl_datum);
+            Ok(DataValue::Integer(1))
         } else {
-            panic!("Key doesn't exist. Figure out how to fail gracefully later.")
+            Err(DataValue::Integer(0))
         }
     }
 
@@ -116,7 +116,7 @@ mod test {
         let expected_ttl = Duration::seconds(5);
 
         database.set("example".to_string(), resp::Value::Integer(999));
-        database.set_lifetime("example".to_string(), expected_ttl);
+        database.set_ttl("example".to_string(), expected_ttl);
 
         let actual_ttl = database.ttl("example".to_string());
 
