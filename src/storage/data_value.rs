@@ -1,8 +1,6 @@
 extern crate chrono;
 extern crate resp;
 
-use std::collections::HashMap;
-
 use super::Database;
 use super::DataKey;
 use self::chrono::{DateTime, Utc, Duration};

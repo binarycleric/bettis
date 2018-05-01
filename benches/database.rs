@@ -9,7 +9,6 @@ use bencher::Bencher;
 use rand::{thread_rng, Rng};
 use chrono::Duration;
 use bettis::Database;
-use std::{thread, time};
 
 fn bulk_string<'a>(string: &'a str) -> resp::Value {
     resp::Value::Bulk(string.to_string())

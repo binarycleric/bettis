@@ -7,24 +7,24 @@ mod data_value;
 use self::data_value::DataValue as DataValueExp;
 use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
-
-use std::collections::HashMap;
 use self::chrono::Duration;
 use self::resp::Value as DataValue;
+
+use std::collections::HashMap as DataHash;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 #[derive(Debug)]
 pub struct Database {
-    values: HashMap<DataKey, DataValue>,
-    ttls: HashMap<DataKey, LifetimeDatum>,
+    values: DataHash<DataKey, DataValue>,
+    ttls: DataHash<DataKey, LifetimeDatum>,
 }
 
 impl Database {
     pub fn new() -> Self {
         Self {
-            values: HashMap::new(),
-            ttls: HashMap::new(),
+            values: DataHash::new(),
+            ttls: DataHash::new(),
         }
     }
 
