@@ -143,8 +143,8 @@ mod test {
     fn it_returns_nothing_on_expired_key() {
         let mut database = Database::new();
 
-        database.set(TEST_KEY.to_string(), resp::Value::Integer(999));
-        database.set_ttl(TEST_KEY.to_string(), Duration::nanoseconds(0));
+        let _ = database.set(TEST_KEY.to_string(), resp::Value::Integer(999));
+        let _ = database.set_ttl(TEST_KEY.to_string(), Duration::nanoseconds(0));
 
         assert!(database.get(TEST_KEY.to_string()) == None);
     }

@@ -15,7 +15,6 @@ pub struct LifetimeDatum {
 }
 
 impl LifetimeDatum {
-
     pub fn new(duration: Duration) -> Self {
         Self {
             duration: duration,
@@ -44,5 +43,18 @@ impl DataValue {
         Self {
             value: value,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_returns_remaining_time() {
+        let duration = Duration::seconds(1);
+        let datum = LifetimeDatum::new(duration);
+
+        assert!(datum.remaining() < duration);
     }
 }
