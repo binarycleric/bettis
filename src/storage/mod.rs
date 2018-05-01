@@ -33,7 +33,20 @@ impl Database {
     }
 
     pub fn get(&self, key: String) -> Option<&DataValue> {
-        self.values.get(&Self::data_key(key))
+        let data_key = Self::data_key((*key).to_string());
+
+        match self.ttl(key) {
+            Some(remaining) => {
+                if remaining.is_zero() {
+                    None
+                } else {
+                    self.values.get(&data_key)
+                }
+            }
+            None => {
+                self.values.get(&data_key)
+            }
+        }
     }
 
     pub fn del(&mut self, key: String) -> Option<DataValue> {
@@ -56,7 +69,7 @@ impl Database {
 
     pub fn ttl(&self, key: String) -> Option<Duration> {
         match self.ttls.get(&Self::data_key(key)) {
-            Some(ttl) => Some(ttl.remaining()),
+            Some(duration) => Some(duration.remaining()),
             None => None,
         }
     }
@@ -110,17 +123,29 @@ impl Database {
 mod test {
     use super::*;
 
+    const TEST_KEY : &'static str  = "example";
+
     #[test]
     fn it_sets_a_keys_time_to_live() {
         let mut database = Database::new();
         let expected_ttl = Duration::seconds(5);
 
-        database.set("example".to_string(), resp::Value::Integer(999));
-        database.set_ttl("example".to_string(), expected_ttl);
+        database.set(TEST_KEY.to_string(), resp::Value::Integer(999));
+        database.set_ttl(TEST_KEY.to_string(), expected_ttl);
 
-        let actual_ttl = database.ttl("example".to_string());
+        let actual_ttl = database.ttl(TEST_KEY.to_string());
 
         assert!(actual_ttl != None);
         assert!(actual_ttl.unwrap() < expected_ttl);
+    }
+
+    #[test]
+    fn it_returns_nothing_on_expired_key() {
+        let mut database = Database::new();
+
+        database.set(TEST_KEY.to_string(), resp::Value::Integer(999));
+        database.set_ttl(TEST_KEY.to_string(), Duration::nanoseconds(0));
+
+        assert!(database.get(TEST_KEY.to_string()) == None);
     }
 }

@@ -24,10 +24,14 @@ impl LifetimeDatum {
     }
 
     pub fn remaining(&self) -> Duration {
-        let expired = self.started + self.duration;
-        let remaining = expired - Utc::now();
+        let now = Utc::now();
+        let expire_on = self.started + self.duration;
 
-        return remaining;
+        if expire_on < now {
+            Duration::nanoseconds(0)
+        } else {
+            now - expire_on
+        }
     }
 }
 
