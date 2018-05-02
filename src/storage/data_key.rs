@@ -4,7 +4,7 @@ use self::chrono::{DateTime, Utc};
 
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq, PartialOrd)]
 pub struct DataKey {
     key: String,
     created: DateTime<Utc>,
@@ -14,12 +14,6 @@ pub struct DataKey {
 impl Ord for DataKey {
     fn cmp(&self, other: &DataKey) -> Ordering {
         self.last_used.cmp(&other.last_used())
-    }
-}
-
-impl PartialOrd for DataKey {
-    fn partial_cmp(&self, other: &DataKey) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 

@@ -15,11 +15,50 @@ use std::collections::BTreeMap;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
+
+#[derive(Debug)]
+pub struct KeyStore {
+    keys: BTreeMap<String, DataKey>,
+}
+
+impl KeyStore {
+    pub fn new() -> Self {
+        Self { keys: BTreeMap::new() }
+    }
+
+    pub fn upsert<'kl>(&mut self, k: &'kl str) -> Box<DataKey> {
+        match self.get(k) {
+            Some(data_key) => Box::new(data_key.to_owned()),
+            None => {
+                self.insert(k);
+                self.upsert(k)
+            }
+        }
+    }
+
+    pub fn get<'kl>(&mut self, k: &'kl str) -> Option<DataKey> {
+        match self.keys.get(k) {
+            Some(k) => Some(k.clone()),
+            None => None,
+        }
+    }
+
+    pub fn insert<'kl>(&mut self, k: &'kl str) {
+        self.keys.insert(
+            k.to_string(),
+            DataKey::new(k.to_string())
+        );
+    }
+}
+
+
+
+
 #[derive(Debug)]
 pub struct Database {
     values: DataHash<DataKey, DataValue>,
     ttls: DataHash<DataKey, LifetimeDatum>,
-    keys: BTreeMap<Vec<u8>, DataKey>,
+    data_keys: KeyStore,
 }
 
 impl Database {
@@ -27,12 +66,13 @@ impl Database {
         Self {
             values: DataHash::new(),
             ttls: DataHash::new(),
-            keys: BTreeMap::new(),
+            data_keys: KeyStore::new(),
         }
     }
 
     pub fn set(&mut self, key: String, value: DataValue) {
-        self.values.insert(Self::data_key(key), value);
+        let data_key = self.data_keys.upsert(&key);
+        self.values.insert(*data_key, value);
     }
 
     pub fn get(&self, key: String) -> Option<&DataValue> {
@@ -63,7 +103,9 @@ impl Database {
     pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
         if self.exist(key.as_str()) {
             let ttl_datum = LifetimeDatum::new(duration);
-            self.ttls.insert(Self::data_key(key), ttl_datum);
+            let data_key = self.data_keys.upsert(&key);
+
+            self.ttls.insert(*data_key, ttl_datum);
             Ok(DataValue::Integer(1))
         } else {
             Err(DataValue::Integer(0))
