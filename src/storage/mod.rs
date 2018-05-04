@@ -16,6 +16,9 @@ use std::collections::BTreeMap;
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 
+
+
+
 #[derive(Debug)]
 pub struct KeyStore {
     keys: BTreeMap<String, DataKey>,
@@ -26,9 +29,9 @@ impl KeyStore {
         Self { keys: BTreeMap::new() }
     }
 
-    pub fn upsert<'kl>(&mut self, k: &'kl str) -> Box<DataKey> {
+    pub fn upsert<'k>(&mut self, k: &'k str) -> DataKey {
         match self.get(k) {
-            Some(data_key) => Box::new(data_key.to_owned()),
+            Some(data_key) => data_key,
             None => {
                 self.insert(k);
                 self.upsert(k)
@@ -36,14 +39,14 @@ impl KeyStore {
         }
     }
 
-    pub fn get<'kl>(&mut self, k: &'kl str) -> Option<DataKey> {
+    pub fn get<'k>(&mut self, k: &'k str) -> Option<DataKey> {
         match self.keys.get(k) {
             Some(k) => Some(k.clone()),
             None => None,
         }
     }
 
-    pub fn insert<'kl>(&mut self, k: &'kl str) {
+    pub fn insert<'k>(&mut self, k: &'k str) {
         self.keys.insert(
             k.to_string(),
             DataKey::new(k.to_string())
@@ -56,8 +59,8 @@ impl KeyStore {
 
 #[derive(Debug)]
 pub struct Database {
-    values: DataHash<DataKey, DataValue>,
-    ttls: DataHash<DataKey, LifetimeDatum>,
+    values: DataHash<String, DataValue>,
+    ttls: DataHash<String, LifetimeDatum>,
     data_keys: KeyStore,
 }
 
@@ -72,32 +75,30 @@ impl Database {
 
     pub fn set(&mut self, key: String, value: DataValue) {
         let data_key = self.data_keys.upsert(&key);
-        self.values.insert(*data_key, value);
+        self.values.insert(data_key.ident(), value);
     }
 
-    pub fn get(&self, key: String) -> Option<&DataValue> {
-        let data_key = Self::data_key((*key).to_string());
-
-        match self.ttl(key) {
+    pub fn get(&mut self, key: String) -> Option<&DataValue> {
+        match self.ttl(key.clone()) {
             Some(remaining) => {
                 if remaining.is_zero() {
                     None
                 } else {
-                    self.values.get(&data_key)
+                    self.values.get(&key)
                 }
             }
             None => {
-                self.values.get(&data_key)
+                self.values.get(&key)
             }
         }
     }
 
     pub fn del(&mut self, key: String) -> Option<DataValue> {
-        self.values.remove(&Self::data_key(key))
+        self.values.remove(&key)
     }
 
     pub fn exist<'l>(&self, key: &'l str) -> bool {
-        self.values.contains_key(&Self::data_key(key.to_string()))
+        self.values.contains_key(&key.to_string())
     }
 
     pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
@@ -105,15 +106,23 @@ impl Database {
             let ttl_datum = LifetimeDatum::new(duration);
             let data_key = self.data_keys.upsert(&key);
 
-            self.ttls.insert(*data_key, ttl_datum);
+            self.ttls.insert(data_key.ident(), ttl_datum);
             Ok(DataValue::Integer(1))
         } else {
             Err(DataValue::Integer(0))
         }
     }
 
-    pub fn ttl(&self, key: String) -> Option<Duration> {
-        match self.ttls.get(&Self::data_key(key)) {
+
+    fn get_key(&mut self, key: String) -> DataKey {
+        self.data_keys.upsert(&key)
+    }
+
+
+    pub fn ttl(&mut self, key: String) -> Option<Duration> {
+        let key = self.get_key(key);
+
+        match self.ttls.get(&key.ident()) {
             Some(duration) => Some(duration.remaining()),
             None => None,
         }

@@ -23,6 +23,10 @@ impl DataKey {
         Self { key: string, created: now, last_used: now }
     }
 
+    pub fn ident(&self) -> String {
+        (*self.key).to_string()
+    }
+
     pub fn last_used(&self) -> DateTime<Utc> {
         self.last_used
     }
