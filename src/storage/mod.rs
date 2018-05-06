@@ -4,7 +4,6 @@ extern crate resp;
 mod data_key;
 mod data_value;
 
-use self::data_value::DataValue as DataValueExp;
 use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
 use self::chrono::Duration;
@@ -24,12 +23,12 @@ pub struct KeyStore {
     keys: BTreeMap<String, DataKey>,
 }
 
-impl KeyStore {
+impl<'k> KeyStore {
     pub fn new() -> Self {
         Self { keys: BTreeMap::new() }
     }
 
-    pub fn upsert<'k>(&mut self, k: &'k str) -> DataKey {
+    pub fn upsert(&mut self, k: &'k str) -> DataKey {
         match self.get(k) {
             Some(data_key) => data_key,
             None => {
@@ -39,14 +38,14 @@ impl KeyStore {
         }
     }
 
-    pub fn get<'k>(&mut self, k: &'k str) -> Option<DataKey> {
+    pub fn get(&mut self, k: &'k str) -> Option<DataKey> {
         match self.keys.get(k) {
             Some(k) => Some(k.clone()),
             None => None,
         }
     }
 
-    pub fn insert<'k>(&mut self, k: &'k str) {
+    pub fn insert(&mut self, k: &'k str) {
         self.keys.insert(
             k.to_string(),
             DataKey::new(k.to_string())
@@ -113,14 +112,8 @@ impl Database {
         }
     }
 
-
-    fn get_key(&mut self, key: String) -> DataKey {
-        self.data_keys.upsert(&key)
-    }
-
-
     pub fn ttl(&mut self, key: String) -> Option<Duration> {
-        let key = self.get_key(key);
+        let key = self.data_keys.upsert(&key);
 
         match self.ttls.get(&key.ident()) {
             Some(duration) => Some(duration.remaining()),
