@@ -34,7 +34,7 @@ fn database_get(bench: &mut Bencher) {
 }
 
 fn database_get_missing_key(bench: &mut Bencher) {
-    let database = Database::new();
+    let mut database = Database::new();
 
     bench.iter(|| {
         database.get("example".to_string());
@@ -78,22 +78,6 @@ fn database_get_with_10000_items(bench: &mut Bencher) {
     })
 }
 
-fn database_incr(bench: &mut Bencher) {
-    let mut database = Database::new();
-
-    bench.iter(|| {
-        let _ = database.incr("example".to_string());
-    })
-}
-
-fn database_decr(bench: &mut Bencher) {
-    let mut database = Database::new();
-
-    bench.iter(|| {
-        let _ = database.decr("example".to_string());
-    })
-}
-
 benchmark_group!(
     benches,
     database_get,
@@ -102,8 +86,6 @@ benchmark_group!(
     database_get_with_expired_key,
     database_get_with_ttled_key,
     database_set,
-    database_incr,
-    database_decr
 );
 
 benchmark_main!(benches);
