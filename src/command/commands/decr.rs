@@ -4,7 +4,7 @@ use storage::Database;
 use command::Runnable;
 use self::resp::Value as DataValue;
 
-const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
+const INVALID_DECR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 pub struct Decr {
     values: Vec<resp::Value>,
@@ -26,7 +26,7 @@ impl Runnable for Decr {
                 if let &DataValue::Integer(ref int) = value {
                     new_value = int.clone() - 1;
                 } else {
-                    return Err(DataValue::Error(INVALID_INCR_ERROR.to_string()));
+                    return Err(DataValue::Error(INVALID_DECR_ERROR.to_string()));
                 }
             }
             None => {
