@@ -96,12 +96,10 @@ impl Database {
         self.values.remove(&key)
     }
 
-    pub fn exist<'l>(&self, key: &'l str) -> bool {
-        self.values.contains_key(&key.to_string())
-    }
-
     pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
-        if self.exist(key.as_str()) {
+        let key_exists: bool = self.values.contains_key(&key);
+
+        if key_exists {
             let ttl_datum = LifetimeDatum::new(duration);
             let data_key = self.data_keys.upsert(&key);
 
