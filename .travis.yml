@@ -1,5 +1,0 @@
-language: rust
-rust:
-  - 1.25.0
-after_success:
-  - cargo bench;
