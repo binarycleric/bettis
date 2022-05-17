@@ -8,16 +8,7 @@ pub mod storage;
 mod command;
 
 use tcp::Listener;
-use resp::Value as RespValue;
 pub use storage::Database;
-
-pub fn integer(int: i64) -> RespValue {
-    RespValue::Integer(int)
-}
-
-pub fn bulk_string<'a>(string: &'a str) -> RespValue {
-    RespValue::Bulk(string.to_string())
-}
 
 pub fn start() {
     simple_logger::init().unwrap();

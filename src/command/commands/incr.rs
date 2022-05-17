@@ -2,6 +2,9 @@ extern crate resp;
 
 use storage::Database;
 use command::Runnable;
+use self::resp::Value as DataValue;
+
+const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";
 
 pub struct Incr {
     values: Vec<resp::Value>,
@@ -15,7 +18,24 @@ impl Incr {
 
 impl Runnable for Incr {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value> {
-        database.incr(Self::hash_key(&self.values))
+        let key = Self::hash_key(&self.values);
+        let new_value: i64;
+
+        match database.get(key.clone()) {
+            Some(value) => {
+                if let &DataValue::Integer(ref int) = value {
+                    new_value = int.clone() + 1;
+                } else {
+                    return Err(DataValue::Error(INVALID_INCR_ERROR.to_string()));
+                }
+            }
+            None => {
+                new_value = 1;
+            }
+        }
+
+        database.set(key.clone(), DataValue::Integer(new_value));
+        Ok(DataValue::Integer(new_value))
     }
 }
 
