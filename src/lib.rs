@@ -10,7 +10,7 @@ mod command;
 use crate::server::Server;
 
 pub fn start() {
-    simple_logger::init();
+    simple_logger::init().unwrap();
 
     let address = String::from("127.0.0.1");
     let port = String::from("7379");
