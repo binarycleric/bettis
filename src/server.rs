@@ -15,45 +15,6 @@ use self::resp::{Decoder, Value};
 use storage::Database;
 use command::Command;
 
-pub struct Stream<'a> {
-    stream: &'a mut TcpStream,
-    done: bool,
-}
-
-impl<'a> Stream<'a> {
-    pub fn tick(&mut self, database: &mut Database) {
-        let mut buffer = vec![0; 128];
-
-        // Check to see if we have any data left in the stream.
-        if self.stream.peek(&mut buffer).unwrap() == 0 {
-            debug!("No data left in stream.");
-            self.done = true;
-            return
-        }
-
-        let payload_size = self.stream.read(&mut buffer).unwrap();
-        let request = &buffer[0..payload_size];
-        let reader = BufReader::new(request);
-        let mut decoder = Decoder::new(reader);
-        let values = decoder.decode().unwrap();
-        let command = Command::new(values);
-
-        debug!("command --> {:?}", command);
-
-        match command.run(database) {
-            Ok(response) => {
-                self.stream.write(&response.encode()).unwrap();
-                self.stream.flush().unwrap();
-            },
-            Err(error) => {
-                error!("error --> {:?}", error);
-                self.stream.write(&error.encode()).unwrap();
-                self.stream.flush().unwrap();
-            }
-        }
-    }
-}
-
 pub struct Server {
     ipaddr: String,
     port: String,
@@ -68,7 +29,7 @@ impl Server {
     }
 
     pub fn start(&self) {
-        match TcpListener::bind(self.connection_string()) {
+        match TcpListener::bind(format!("{}:{}", self.ipaddr, self.port)) {
             Ok(listener) => {
                 info!("listening started, ready to accept");
 
@@ -77,30 +38,52 @@ impl Server {
 
                 for stream in listener.incoming() {
                     pool.execute(move|| {
-                        debug!("stream --> {:#?}", stream);
-
                         let mut database = Database::new();
                         let mut stream = stream.unwrap();
+                        let mut request = Request { stream: &mut stream };
 
-                        Self::handle_stream(&mut stream, &mut database);
+                        request.run(&mut database);
                     });
                 }
             },
             Err(err) => println!("{:?}", err),
         }
     }
+}
 
-    fn connection_string(&self) -> String {
-        format!("{}:{}", self.ipaddr, self.port)
-    }
 
-    fn handle_stream(stream: &mut TcpStream, database: &mut Database) {
-        let mut s = Stream { stream: stream, done: false };
+pub struct Request<'a> {
+    stream: &'a mut TcpStream,
+}
 
+impl<'a> Request<'a> {
+    pub fn run(&mut self, database: &mut Database) {
         loop {
-            s.tick(database);
-            if s.done == true {
+            let mut buffer = vec![0; 128];
+
+            if self.stream.peek(&mut buffer).unwrap() == 0 {
                 break;
+            }
+
+            let payload_size = self.stream.read(&mut buffer).unwrap();
+            let request = &buffer[0..payload_size];
+            let reader = BufReader::new(request);
+            let mut decoder = Decoder::new(reader);
+            let values = decoder.decode().unwrap();
+            let command = Command::new(values);
+
+            debug!("command --> {:?}", command);
+
+            match command.run(database) {
+                Ok(response) => {
+                    self.stream.write(&response.encode()).unwrap();
+                    self.stream.flush().unwrap();
+                },
+                Err(error) => {
+                    error!("error --> {:?}", error);
+                    self.stream.write(&error.encode()).unwrap();
+                    self.stream.flush().unwrap();
+                }
             }
         }
     }
