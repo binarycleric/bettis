@@ -33,17 +33,25 @@ def basic_tests
   pp @redis.get("test-3")
 end
 
+def multi_client_tests
+  15.times do
+    redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
+    redis.set("test", 23)
+  end
+end
+
 @redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
 @redis.set("test", 23)
-
+o
 time = Benchmark.realtime do
   @redis.del("incr-test")
   @redis.del("decr-test")
 
-  puts "Running Reddis tests\n\n"
+  puts "Running Redis tests\n\n"
   basic_tests
   incr_tests
   decr_tests
+  multi_client_tests
 end
 puts "Total time: #{time}"
 
