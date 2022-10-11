@@ -1,4 +1,5 @@
 extern crate resp;
+extern crate threadpool;
 
 use std::str;
 use std::net::TcpListener;
@@ -6,12 +7,52 @@ use std::net::TcpStream;
 use std::io::prelude::*;
 use std::io::Write;
 use std::io::BufReader;
-use std::thread;
+use std::time::Duration;
 
+use self::threadpool::ThreadPool;
 use self::resp::{Decoder, Value};
 
 use storage::Database;
 use command::Command;
+
+pub struct Stream<'a> {
+    stream: &'a mut TcpStream,
+    done: bool,
+}
+
+impl<'a> Stream<'a> {
+    pub fn tick(&mut self, database: &mut Database) {
+        let mut buffer = vec![0; 128];
+
+        // Check to see if we have any data left in the stream.
+        if self.stream.peek(&mut buffer).unwrap() == 0 {
+            debug!("No data left in stream.");
+            self.done = true;
+            return
+        }
+
+        let payload_size = self.stream.read(&mut buffer).unwrap();
+        let request = &buffer[0..payload_size];
+        let reader = BufReader::new(request);
+        let mut decoder = Decoder::new(reader);
+        let values = decoder.decode().unwrap();
+        let command = Command::new(values);
+
+        debug!("command --> {:?}", command);
+
+        match command.run(database) {
+            Ok(response) => {
+                self.stream.write(&response.encode()).unwrap();
+                self.stream.flush().unwrap();
+            },
+            Err(error) => {
+                error!("error --> {:?}", error);
+                self.stream.write(&error.encode()).unwrap();
+                self.stream.flush().unwrap();
+            }
+        }
+    }
+}
 
 pub struct Server {
     ipaddr: String,
@@ -31,10 +72,11 @@ impl Server {
             Ok(listener) => {
                 info!("listening started, ready to accept");
 
-                // This isn't great because it can spawn endless threads.
-                // Eventually make this into a threadpool.
+                // Using a small threadpool for testing purposes.
+                let pool = ThreadPool::new(8);
+
                 for stream in listener.incoming() {
-                    thread::spawn(move || {
+                    pool.execute(move|| {
                         debug!("stream --> {:#?}", stream);
 
                         let mut database = Database::new();
@@ -53,32 +95,12 @@ impl Server {
     }
 
     fn handle_stream(stream: &mut TcpStream, database: &mut Database) {
+        let mut s = Stream { stream: stream, done: false };
+
         loop {
-            let mut buffer = vec![0; 128];
-            let payload_size = stream.read(&mut buffer).unwrap();
-
-            if payload_size == 0 {
+            s.tick(database);
+            if s.done == true {
                 break;
-            }
-
-            let request = &buffer[0..payload_size];
-            let reader = BufReader::new(request);
-            let mut decoder = Decoder::new(reader);
-            let values = decoder.decode().unwrap();
-            let command = Command::new(values);
-
-            debug!("command --> {:?}", command);
-
-            match command.run(database) {
-                Ok(response) => {
-                    stream.write(&response.encode()).unwrap();
-                    stream.flush().unwrap();
-                },
-                Err(error) => {
-                    error!("error --> {:?}", error);
-                    stream.write(&error.encode()).unwrap();
-                    stream.flush().unwrap();
-                }
             }
         }
     }

@@ -34,15 +34,24 @@ def basic_tests
 end
 
 def multi_client_tests
-  15.times do
+  15.times do |n|
     redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
-    redis.set("test", 23)
+    redis.set("test-#{n}", 23)
+    redis.close
   end
+end
+
+def test_with_long_running_connections
+  puts "Testing with long running connections."
+  redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
+  redis.set("test_with_long_running_connections", 500)
+  sleep(6);
+  pp redis.get("test_with_long_running_connections")
 end
 
 @redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
 @redis.set("test", 23)
-o
+
 time = Benchmark.realtime do
   @redis.del("incr-test")
   @redis.del("decr-test")
@@ -52,6 +61,7 @@ time = Benchmark.realtime do
   incr_tests
   decr_tests
   multi_client_tests
+  # test_with_long_running_connections
 end
 puts "Total time: #{time}"
 
