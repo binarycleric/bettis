@@ -49,37 +49,15 @@ impl<'k> KeyStore {
 }
 
 #[derive(Debug)]
-pub struct Data {
-    databases: HashMap<i32, Database>,
-}
-
-impl Data {
-    pub fn new() -> Self {
-        let mut databases = HashMap::new();
-
-        for id in 0..15 {
-            databases.insert(id, Database::new(id));
-        }
-
-        Self {
-            databases: databases
-        }
-    }
-}
-
-
-#[derive(Debug)]
 pub struct Database {
-    db: i32,
     values: HashMap<String, DataValue>,
     ttls: HashMap<String, LifetimeDatum>,
     data_keys: KeyStore,
 }
 
 impl Database {
-    pub fn new(db: i32) -> Self {
+    pub fn new() -> Self {
         Self {
-            db: db,
             values: HashMap::new(),
             ttls: HashMap::new(),
             data_keys: KeyStore::new(),

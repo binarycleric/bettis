@@ -34,6 +34,7 @@ def basic_tests
 end
 
 @redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
+@redis.set("test", 23)
 
 time = Benchmark.realtime do
   @redis.del("incr-test")

@@ -30,65 +30,45 @@ impl Server {
 
         match TcpListener::bind(connection_string) {
             Ok(listener) => {
-              info!("listening started, ready to accept");
+                info!("listening started, ready to accept");
+                let mut database = Database::new();
 
-              for stream in listener.incoming() {
-                  debug!("stream --> {:#?}", stream);
+                for stream in listener.incoming() {
+                    debug!("stream --> {:#?}", stream);
 
-                  let mut stream = stream.unwrap();
-                  let mut request = Request::new(&mut stream);
+                    let mut stream = stream.unwrap();
 
-                  request.run();
-              }
+                    loop {
+                        let mut buffer = vec![0; 128];
+                        let payload_size = stream.read(&mut buffer).unwrap();
+
+                        if payload_size == 0 {
+                            break;
+                        }
+
+                        let request = &buffer[0..payload_size];
+                        let reader = BufReader::new(request);
+                        let mut decoder = Decoder::new(reader);
+                        let values = decoder.decode().unwrap();
+                        let command = Command::new(values);
+
+                        debug!("command --> {:?}", command);
+
+                        match command.run(&mut database) {
+                            Ok(response) => {
+                                stream.write(&response.encode()).unwrap();
+                                stream.flush().unwrap();
+                            },
+                            Err(error) => {
+                                println!("error --> {:?}", error);
+                                stream.write(&error.encode()).unwrap();
+                                stream.flush().unwrap();
+                            }
+                        }
+                    }
+                }
             },
             Err(err) => println!("{:?}", err),
         }
-    }
-}
-
-#[derive(Debug)]
-struct Request<'tcp> {
-    stream: &'tcp TcpStream,
-}
-
-impl<'tcp> Request<'tcp> {
-    pub fn new(stream: &'tcp mut TcpStream) -> Self {
-        Self { stream: stream }
-    }
-
-    pub fn run(&mut self) {
-        let mut database = Database::new(12);
-
-        loop {
-            let mut buffer = vec![0; 128];
-            let payload_size = self.stream.read(&mut buffer).unwrap();
-
-            if payload_size == 0 {
-                break;
-            }
-
-            let request = &buffer[0..payload_size];
-            let reader = BufReader::new(request);
-            let mut decoder = Decoder::new(reader);
-            let values = decoder.decode().unwrap();
-            let command = Command::new(values);
-
-            debug!("command --> {:?}", command);
-
-            match command.run(&mut database) {
-              Ok(response) => self.write_response(response),
-              Err(error) => {
-                  println!("{:?}", error);
-                  self.write_response(error);
-              }
-            }
-        }
-
-        debug!("database --> {:#?}", database);
-    }
-
-    fn write_response(&mut self, response: resp::Value) {
-        self.stream.write(&response.encode()).unwrap();
-        self.stream.flush().unwrap();
     }
 }
