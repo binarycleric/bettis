@@ -33,7 +33,7 @@ def basic_tests
   pp @redis.get("test-3")
 end
 
-@redis = Redis.new(host: "127.0.0.1", port: 6379, db: 15)
+@redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
 
 time = Benchmark.realtime do
   @redis.del("incr-test")
@@ -45,3 +45,5 @@ time = Benchmark.realtime do
   decr_tests
 end
 puts "Total time: #{time}"
+
+@redis.close

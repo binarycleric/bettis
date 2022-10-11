@@ -22,6 +22,7 @@ const INCR_COMMAND: &'static str = "incr";
 const DECR_COMMAND: &'static str = "decr";
 const EXPIRE_COMMAND: &'static str = "expire";
 
+#[derive(Debug)]
 pub enum Available {
     Select,
     Set,
@@ -33,8 +34,8 @@ pub enum Available {
 }
 
 impl Available {
-    pub fn from_str<'a>(string: &'a str) -> Self {
-        match string {
+    pub fn from_str(string: String) -> Self {
+        match string.to_lowercase().as_str() {
             SELECT_COMMAND => Available::Select,
             SET_COMMAND => Available::Set,
             GET_COMMAND => Available::Get,

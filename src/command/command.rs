@@ -8,18 +8,8 @@ use super::commands::Available as AvailableCommand;
 
 use storage::Database;
 
-pub fn run(
-    reader: BufReader<&[u8]>,
-    data_table: &mut Database,
-) -> Result<resp::Value, resp::Value> {
-    let mut decoder = Decoder::new(reader);
-    let values = decoder.decode().unwrap();
-    let command = Command::new(values);
-
-    command.run(data_table)
-}
-
-struct Command {
+#[derive(Debug)]
+pub struct Command {
     command_name: AvailableCommand,
     values: Vec<resp::Value>,
 }
@@ -40,7 +30,7 @@ impl Command {
             let values: Vec<resp::Value>;
 
             if let Value::Bulk(ref cname) = array[0] {
-                command_name = AvailableCommand::from_str(cname);
+                command_name = AvailableCommand::from_str(String::from(cname));
             } else {
                 panic!("This shouldn't happen");
             }

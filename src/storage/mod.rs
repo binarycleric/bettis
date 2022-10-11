@@ -9,7 +9,7 @@ use self::data_key::DataKey;
 use self::chrono::Duration;
 use self::resp::Value as DataValue;
 
-use std::collections::HashMap as DataHash;
+use std::collections::HashMap;
 use std::collections::BTreeMap;
 
 
@@ -48,21 +48,40 @@ impl<'k> KeyStore {
     }
 }
 
+#[derive(Debug)]
+pub struct Data {
+    databases: HashMap<i32, Database>,
+}
 
+impl Data {
+    pub fn new() -> Self {
+        let mut databases = HashMap::new();
+
+        for id in 0..15 {
+            databases.insert(id, Database::new(id));
+        }
+
+        Self {
+            databases: databases
+        }
+    }
+}
 
 
 #[derive(Debug)]
 pub struct Database {
-    values: DataHash<String, DataValue>,
-    ttls: DataHash<String, LifetimeDatum>,
+    db: i32,
+    values: HashMap<String, DataValue>,
+    ttls: HashMap<String, LifetimeDatum>,
     data_keys: KeyStore,
 }
 
 impl Database {
-    pub fn new() -> Self {
+    pub fn new(db: i32) -> Self {
         Self {
-            values: DataHash::new(),
-            ttls: DataHash::new(),
+            db: db,
+            values: HashMap::new(),
+            ttls: HashMap::new(),
             data_keys: KeyStore::new(),
         }
     }

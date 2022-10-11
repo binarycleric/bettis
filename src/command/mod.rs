@@ -5,7 +5,7 @@ mod commands;
 
 use storage::Database;
 
-pub use self::command::run;
+pub use self::command::Command;
 
 trait Runnable {
     fn invoke(&self, database: &mut Database) -> Result<resp::Value, resp::Value>;
