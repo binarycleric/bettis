@@ -32,18 +32,6 @@ impl LifetimeDatum {
     }
 }
 
-pub struct DataValue {
-    value: RespValue,
-}
-
-impl DataValue {
-    pub fn new(value: RespValue) -> Self {
-        Self {
-            value: value,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;

@@ -8,6 +8,7 @@ use std::io::prelude::*;
 use std::io::Write;
 use std::io::BufReader;
 use std::time::Duration;
+use std::sync::{Arc, Mutex};
 
 use self::threadpool::ThreadPool;
 use self::resp::{Decoder, Value};
@@ -29,30 +30,33 @@ impl Server {
     }
 
     pub fn start(&self) {
-        match TcpListener::bind(format!("{}:{}", self.ipaddr, self.port)) {
-            Ok(listener) => {
-                info!("listening started, ready to accept");
+        let listener = TcpListener::bind(format!("{}:{}", self.ipaddr, self.port));
 
-                // Using a small threadpool for testing purposes.
-                let pool = ThreadPool::new(8);
-
-                for stream in listener.incoming() {
-                    pool.execute(move|| {
-                        let mut database = Database::new();
-                        let mut stream = stream.unwrap();
-                        let mut request = Request { stream: &mut stream };
-
-                        request.run(&mut database);
-                    });
-                }
-            },
+        match listener {
+            Ok(listener) => self.handle_incoming_connections(listener),
             Err(err) => println!("{:?}", err),
+        }
+    }
+
+    fn handle_incoming_connections(&self, listener: TcpListener) {
+        info!("listening started, ready to accept");
+
+        // Using a small threadpool for testing purposes.
+        let pool = ThreadPool::new(8);
+
+        for stream in listener.incoming() {
+            pool.execute(move|| {
+                let mut database = Database::new();
+                let mut stream = stream.unwrap();
+                let mut request = Request { stream: &mut stream };
+
+                request.run(&mut database);
+            });
         }
     }
 }
 
-
-pub struct Request<'a> {
+struct Request<'a> {
     stream: &'a mut TcpStream,
 }
 
@@ -60,8 +64,11 @@ impl<'a> Request<'a> {
     pub fn run(&mut self, database: &mut Database) {
         loop {
             let mut buffer = vec![0; 128];
+            let peeked = self.stream.peek(&mut buffer).unwrap();
 
-            if self.stream.peek(&mut buffer).unwrap() == 0 {
+            println!("peeked --> {:?}", peeked);
+
+            if peeked == 0 {
                 break;
             }
 

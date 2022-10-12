@@ -8,7 +8,7 @@ extern crate chrono;
 use bencher::Bencher;
 use rand::{thread_rng, Rng};
 use chrono::Duration;
-use bettis::Database;
+use bettis::storage::Database;
 
 fn bulk_string<'a>(string: &'a str) -> resp::Value {
     resp::Value::Bulk(string.to_string())
@@ -73,7 +73,7 @@ fn database_get_with_10000_items(bench: &mut Bencher) {
     }
 
     bench.iter(|| {
-        let random_key = rng.gen_range(0, 10000);
+        let random_key = rng.gen_range(0..10000);
         database.get(format!("example-{}", random_key));
     })
 }

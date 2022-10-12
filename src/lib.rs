@@ -3,9 +3,9 @@ extern crate log;
 extern crate resp;
 extern crate simple_logger;
 
-mod server;
-mod storage;
-mod command;
+pub mod server;
+pub mod storage;
+pub mod command;
 
 use crate::server::Server;
 

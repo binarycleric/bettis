@@ -9,6 +9,7 @@ log = "0.4"
 simple_logger = "0.5"
 chrono = "0.4"
 threadpool = "1.8.1"
+sled = "0.34.7"
 
 [dev-dependencies]
 bencher = "0.1"

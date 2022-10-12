@@ -1,5 +1,6 @@
 extern crate chrono;
 extern crate resp;
+extern crate sled;
 
 mod data_key;
 mod data_value;
@@ -8,6 +9,8 @@ use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
 use self::chrono::Duration;
 use self::resp::Value as DataValue;
+use self::sled::Config as SledConfig;
+use self::sled::Result as SledResult;
 
 use std::collections::HashMap;
 use std::collections::BTreeMap;
@@ -53,6 +56,7 @@ pub struct Database {
     values: HashMap<String, DataValue>,
     ttls: HashMap<String, LifetimeDatum>,
     data_keys: KeyStore,
+    db: sled::Db,
 }
 
 impl Database {
@@ -61,11 +65,13 @@ impl Database {
             values: HashMap::new(),
             ttls: HashMap::new(),
             data_keys: KeyStore::new(),
+            db: SledConfig::new().temporary(true).open().unwrap(),
         }
     }
 
     pub fn set(&mut self, key: String, value: DataValue) {
         let data_key = self.data_keys.upsert(&key);
+        self.db.insert(data_key.ident(), value.encode());
         self.values.insert(data_key.ident(), value);
     }
 
