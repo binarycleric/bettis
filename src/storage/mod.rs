@@ -12,6 +12,10 @@ use self::resp::Value as DataValue;
 use self::sled::Config as SledConfig;
 use self::sled::Result as SledResult;
 
+use std::io::Cursor;
+use std::io::BufReader;
+use self::resp::Decoder;
+
 use std::collections::HashMap;
 use std::collections::BTreeMap;
 
@@ -53,7 +57,6 @@ impl<'k> KeyStore {
 
 #[derive(Debug)]
 pub struct Database {
-    values: HashMap<String, DataValue>,
     ttls: HashMap<String, LifetimeDatum>,
     data_keys: KeyStore,
     db: sled::Db,
@@ -62,7 +65,6 @@ pub struct Database {
 impl Database {
     pub fn new() -> Self {
         Self {
-            values: HashMap::new(),
             ttls: HashMap::new(),
             data_keys: KeyStore::new(),
             db: SledConfig::new().temporary(true).open().unwrap(),
@@ -72,39 +74,52 @@ impl Database {
     pub fn set(&mut self, key: String, value: DataValue) {
         let data_key = self.data_keys.upsert(&key);
         self.db.insert(data_key.ident(), value.encode());
-        self.values.insert(data_key.ident(), value);
     }
 
-    pub fn get(&mut self, key: String) -> Option<&DataValue> {
+    pub fn get(&mut self, key: String) -> Option<DataValue> {
         match self.ttl(key.clone()) {
             Some(remaining) => {
                 if remaining.is_zero() {
                     None
                 } else {
-                    self.values.get(&key)
+                    self.get_no_ttl(key.clone())
                 }
             }
             None => {
-                self.values.get(&key)
+                self.get_no_ttl(key.clone())
             }
         }
     }
 
+    fn get_no_ttl(&mut self, key: String) -> Option<DataValue> {
+        let vector = self.db.get(&key).unwrap().as_deref()?.to_vec();
+        let mut file = Cursor::new(vector);
+        let reader = BufReader::new(file);
+        let mut decoder = Decoder::new(reader);
+        let values = decoder.decode().unwrap();
+
+        Some(values)
+    }
+
     pub fn del(&mut self, key: String) -> Option<DataValue> {
-        self.values.remove(&key)
+        let value = self.get_no_ttl(key.clone());
+        self.db.remove(&key);
+
+        return value;
     }
 
     pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
-        let key_exists: bool = self.values.contains_key(&key);
+        match self.get_no_ttl(key.clone()) {
+            Some(_) => {
+                let ttl_datum = LifetimeDatum::new(duration);
+                let data_key = self.data_keys.upsert(&key);
 
-        if key_exists {
-            let ttl_datum = LifetimeDatum::new(duration);
-            let data_key = self.data_keys.upsert(&key);
-
-            self.ttls.insert(data_key.ident(), ttl_datum);
-            Ok(DataValue::Integer(1))
-        } else {
-            Err(DataValue::Integer(0))
+                self.ttls.insert(data_key.ident(), ttl_datum);
+                Ok(DataValue::Integer(1))
+            }
+            None => {
+                Err(DataValue::Integer(0))
+            }
         }
     }
 

@@ -23,7 +23,7 @@ impl Runnable for Incr {
 
         match database.get(key.clone()) {
             Some(value) => {
-                if let &DataValue::Integer(ref int) = value {
+                if let DataValue::Integer(int) = value {
                     new_value = int.clone() + 1;
                 } else {
                     return Err(DataValue::Error(INVALID_INCR_ERROR.to_string()));
@@ -34,8 +34,10 @@ impl Runnable for Incr {
             }
         }
 
-        database.set(key.clone(), DataValue::Integer(new_value));
-        Ok(DataValue::Integer(new_value))
+        let integer = DataValue::Integer(new_value);
+        database.set(key.clone(), integer.clone());
+
+        Ok(integer)
     }
 }
 

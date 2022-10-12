@@ -50,7 +50,7 @@ def test_with_long_running_connections
 end
 
 @redis = Redis.new(host: "127.0.0.1", port: 7379, db: 15)
-@redis.set("test", 23)
+puts @redis.set("test", 23)
 
 time = Benchmark.realtime do
   @redis.del("incr-test")
