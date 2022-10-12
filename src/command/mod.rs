@@ -2,9 +2,6 @@ extern crate resp;
 
 mod commands;
 
-use std::io::BufReader;
-use self::resp::{Decoder, Value};
-
 use storage::Database;
 
 const SELECT_COMMAND: &'static str = "select";
@@ -82,11 +79,11 @@ impl Command {
     }
 
     fn extract_values(incoming: resp::Value) -> (Available, Vec<resp::Value>) {
-        if let Value::Array(ref array) = incoming {
+        if let resp::Value::Array(ref array) = incoming {
             let command_name: Available;
             let values: Vec<resp::Value>;
 
-            if let Value::Bulk(ref cname) = array[0] {
+            if let resp::Value::Bulk(ref cname) = array[0] {
                 command_name = Available::from_str(String::from(cname));
             } else {
                 panic!("This shouldn't happen");

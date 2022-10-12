@@ -58,7 +58,7 @@ mod tests {
         let expected = Value::Integer(2);
         let actual = database.get("test_key".to_string()).unwrap();
 
-        assert_eq!(*actual, expected);
+        assert_eq!(actual, expected);
     }
 
     #[test]
@@ -71,6 +71,6 @@ mod tests {
         let expected = Value::Integer(1);
         let actual = database.get("test_key".to_string()).unwrap();
 
-        assert_eq!(*actual, expected);
+        assert_eq!(actual, expected);
     }
 }

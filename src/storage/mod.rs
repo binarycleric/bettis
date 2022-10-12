@@ -9,8 +9,6 @@ use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
 use self::chrono::Duration;
 use self::resp::Value as DataValue;
-use self::sled::Config as SledConfig;
-use self::sled::Result as SledResult;
 
 use std::io::Cursor;
 use std::io::BufReader;
@@ -59,15 +57,19 @@ impl<'k> KeyStore {
 pub struct Database {
     ttls: HashMap<String, LifetimeDatum>,
     data_keys: KeyStore,
-    db: sled::Db,
+    db: sled::Tree,
 }
 
 impl Database {
     pub fn new() -> Self {
+        let db_id = format!("db-{}", 15);
+        let config = sled::Config::new().temporary(true);
+        let tree = config.open().unwrap().open_tree(db_id).unwrap();
+
         Self {
             ttls: HashMap::new(),
             data_keys: KeyStore::new(),
-            db: SledConfig::new().temporary(true).open().unwrap(),
+            db: tree,
         }
     }
 
@@ -93,7 +95,7 @@ impl Database {
 
     fn get_no_ttl(&mut self, key: String) -> Option<DataValue> {
         let vector = self.db.get(&key).unwrap().as_deref()?.to_vec();
-        let mut file = Cursor::new(vector);
+        let file = Cursor::new(vector);
         let reader = BufReader::new(file);
         let mut decoder = Decoder::new(reader);
         let values = decoder.decode().unwrap();

@@ -1,10 +1,7 @@
 extern crate chrono;
 extern crate resp;
 
-use super::Database;
-use super::DataKey;
 use self::chrono::{DateTime, Utc, Duration};
-use self::resp::Value as RespValue;
 
 #[derive(Debug)]
 pub struct LifetimeDatum {
