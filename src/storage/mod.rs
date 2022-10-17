@@ -2,22 +2,14 @@ extern crate chrono;
 extern crate resp;
 extern crate sled;
 
-mod data_key;
-mod data_value;
-
-use self::data_value::LifetimeDatum;
-use self::data_key::DataKey;
-use self::chrono::{DateTime, Utc, Duration};
+use self::chrono::{DateTime, Utc, NaiveDateTime, Duration};
 use self::resp::Value as DataValue;
 
 use std::str;
 use std::io::Cursor;
 use std::io::BufReader;
 use self::resp::Decoder;
-
-
 use std::collections::HashMap;
-
 
 #[derive(Debug)]
 pub struct Database {
@@ -45,6 +37,10 @@ impl Database {
     pub fn get(&mut self, key: String) -> Option<DataValue> {
         match self.ttl(key.clone()) {
             Some(remaining) => {
+
+                println!("{:?}", remaining);
+                println!("{:?}", remaining.is_zero());
+
                 if remaining.is_zero() {
                     self.db.remove(&key);
 
@@ -80,8 +76,8 @@ impl Database {
         match self.get_no_ttl(key.clone()) {
             Some(_) => {
                 let ttl = Utc::now() + duration;
+                self.ttls.insert(key, &*ttl.to_rfc3339());
 
-                self.ttls.insert(key, &*ttl.to_string());
                 Ok(DataValue::Integer(1))
             }
             None => {
@@ -95,12 +91,15 @@ impl Database {
             Ok(None) => None,
             Ok(t) => {
                 let datestring = str::from_utf8(t.as_deref().unwrap()).unwrap();
-                let end_datetime = DateTime::parse_from_rfc2822(datestring)
+                let end_datetime = DateTime::parse_from_rfc3339(datestring)
                     .unwrap()
                     .with_timezone(&Utc);
-                let duration = end_datetime - Utc::now();
 
-                Some(duration)
+                if end_datetime < Utc::now() {
+                    Some(Duration::nanoseconds(0))
+                } else {
+                    Some(end_datetime - Utc::now())
+                }
             },
             Err(_) => None
         }
