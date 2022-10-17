@@ -7,81 +7,47 @@ mod data_value;
 
 use self::data_value::LifetimeDatum;
 use self::data_key::DataKey;
-use self::chrono::Duration;
+use self::chrono::{DateTime, Utc, Duration};
 use self::resp::Value as DataValue;
 
+use std::str;
 use std::io::Cursor;
 use std::io::BufReader;
 use self::resp::Decoder;
 
+
 use std::collections::HashMap;
-use std::collections::BTreeMap;
 
-
-#[derive(Debug)]
-pub struct KeyStore {
-    keys: BTreeMap<String, DataKey>,
-}
-
-impl<'k> KeyStore {
-    pub fn new() -> Self {
-        Self { keys: BTreeMap::new() }
-    }
-
-    pub fn upsert(&mut self, k: &'k str) -> DataKey {
-        match self.get(k) {
-            Some(data_key) => data_key,
-            None => {
-                self.insert(k);
-                self.upsert(k)
-            }
-        }
-    }
-
-    pub fn get(&mut self, k: &'k str) -> Option<DataKey> {
-        match self.keys.get(k) {
-            Some(k) => Some(k.clone()),
-            None => None,
-        }
-    }
-
-    pub fn insert(&mut self, k: &'k str) {
-        self.keys.insert(
-            k.to_string(),
-            DataKey::new(k.to_string())
-        );
-    }
-}
 
 #[derive(Debug)]
 pub struct Database {
-    ttls: HashMap<String, LifetimeDatum>,
-    data_keys: KeyStore,
+    ttls: sled::Tree,
     db: sled::Tree,
 }
 
 impl Database {
     pub fn new() -> Self {
-        let db_id = format!("db-{}", 15);
         let config = sled::Config::new().temporary(true);
-        let tree = config.open().unwrap().open_tree(db_id).unwrap();
+        let db = config.open().unwrap();
+        let tree = db.open_tree(format!("db-{}", 15)).unwrap();
+        let ttls = db.open_tree(format!("ttls-{}", 15)).unwrap();
 
         Self {
-            ttls: HashMap::new(),
-            data_keys: KeyStore::new(),
+            ttls: ttls,
             db: tree,
         }
     }
 
     pub fn set(&mut self, key: String, value: DataValue) {
-        let data_key = self.data_keys.upsert(&key);
-        self.db.insert(data_key.ident(), value.encode());
+        self.db.insert(&key, value.encode());
     }
 
     pub fn get(&mut self, key: String) -> Option<DataValue> {
         match self.ttl(key.clone()) {
             Some(remaining) => {
                 if remaining.is_zero() {
+                    self.db.remove(&key);
+
                     None
                 } else {
                     self.get_no_ttl(key.clone())
@@ -113,10 +79,9 @@ impl Database {
     pub fn set_ttl(&mut self, key: String, duration: Duration) -> Result<DataValue, DataValue> {
         match self.get_no_ttl(key.clone()) {
             Some(_) => {
-                let ttl_datum = LifetimeDatum::new(duration);
-                let data_key = self.data_keys.upsert(&key);
+                let ttl = Utc::now() + duration;
 
-                self.ttls.insert(data_key.ident(), ttl_datum);
+                self.ttls.insert(key, &*ttl.to_string());
                 Ok(DataValue::Integer(1))
             }
             None => {
@@ -126,11 +91,18 @@ impl Database {
     }
 
     pub fn ttl(&mut self, key: String) -> Option<Duration> {
-        let key = self.data_keys.upsert(&key);
+        match self.ttls.get(&key) {
+            Ok(None) => None,
+            Ok(t) => {
+                let datestring = str::from_utf8(t.as_deref().unwrap()).unwrap();
+                let end_datetime = DateTime::parse_from_rfc2822(datestring)
+                    .unwrap()
+                    .with_timezone(&Utc);
+                let duration = end_datetime - Utc::now();
 
-        match self.ttls.get(&key.ident()) {
-            Some(duration) => Some(duration.remaining()),
-            None => None,
+                Some(duration)
+            },
+            Err(_) => None
         }
     }
 }

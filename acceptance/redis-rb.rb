@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require "redis"
 require "pry"
 require "pp"
