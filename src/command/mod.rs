@@ -2,7 +2,7 @@ extern crate resp;
 
 mod commands;
 
-use storage::Database;
+use crate::storage::Database;
 
 const SELECT_COMMAND: &'static str = "select";
 const SET_COMMAND: &'static str = "set";

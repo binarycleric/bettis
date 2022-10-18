@@ -1,7 +1,7 @@
 extern crate resp;
 
-use storage::Database;
-use command::Runnable;
+use crate::storage::Database;
+use crate::command::Runnable;
 
 #[derive(Debug)]
 pub struct Select {

@@ -1,7 +1,7 @@
 extern crate resp;
 
-use storage::Database;
-use command::Runnable;
+use crate::storage::Database;
+use crate::command::Runnable;
 use self::resp::Value as DataValue;
 
 const INVALID_INCR_ERROR: &'static str = "ERR value is not an integer or out of range";

@@ -1,8 +1,8 @@
 extern crate resp;
 extern crate chrono;
 
-use storage::Database;
-use command::Runnable;
+use crate::storage::Database;
+use crate::command::Runnable;
 
 use self::chrono::Duration;
 

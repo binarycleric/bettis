@@ -9,8 +9,8 @@ use std::io::BufReader;
 
 use self::threadpool::ThreadPool;
 
-use storage::Database;
-use command::Command;
+use crate::storage::Database;
+use crate::command::Command;
 
 pub struct Server {
     ipaddr: String,
